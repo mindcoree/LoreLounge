@@ -10,8 +10,13 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+import jwt
 
 from core.config import settings
+from core.types import ACCESS_TOKEN_COOKIE_KEY
+from core import security as auth
 from infrastructure.db.session import db_helper
 from api.v1.auth import router as auth_router
 from api.v1.roles import router as roles_router
@@ -66,6 +71,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Auth middleware ────────────────────────────────────────────────────────────
+class AccessTokenMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        token = request.cookies.get(ACCESS_TOKEN_COOKIE_KEY)
+        if token:
+            try:
+                payload = await auth.decode_jwt(token)
+                request.state.auth_payload = payload
+            except jwt.ExpiredSignatureError:
+                request.state.token_needs_refresh = True
+            except jwt.InvalidTokenError:
+                # не валим запрос, просто считаем неаутентифицированным
+                pass
+            except Exception:
+                logger.exception("Ошибка валидации access token")
+        return await call_next(request)
+
+app.add_middleware(AccessTokenMiddleware)
 
 # Роуты
 app.include_router(auth_router, prefix="/api/v1", tags=["auth"])

@@ -10,11 +10,15 @@
     {
       "endpoint": "/api/auth/register",
       "method": "POST",
-      "output_encoding": "json",
+      "output_encoding": "no-op",
+      "input_headers": [
+        "Content-Type",
+        "Cookie"
+      ],
       "backend": [
         {
           "url_pattern": "/api/v1/register",
-          "encoding": "json",
+          "encoding": "no-op",
           "sd": "static",
           "method": "POST",
           "host": ["http://auth-service:8000"]
@@ -24,11 +28,15 @@
     {
       "endpoint": "/api/auth/login",
       "method": "POST",
-      "output_encoding": "json",
+      "output_encoding": "no-op",
+      "input_headers": [
+        "Content-Type",
+        "Cookie"
+      ],
       "backend": [
         {
           "url_pattern": "/api/v1/login",
-          "encoding": "json",
+          "encoding": "no-op",
           "sd": "static",
           "method": "POST",
           "host": ["http://auth-service:8000"]
@@ -38,11 +46,15 @@
     {
       "endpoint": "/api/auth/logout",
       "method": "POST",
-      "output_encoding": "json",
+      "output_encoding": "no-op",
+      "input_headers": [
+        "Content-Type",
+        "Cookie"
+      ],
       "backend": [
         {
           "url_pattern": "/api/v1/logout",
-          "encoding": "json",
+          "encoding": "no-op",
           "sd": "static",
           "method": "POST",
           "host": ["http://auth-service:8000"]
@@ -52,11 +64,14 @@
     {
       "endpoint": "/api/auth/me",
       "method": "GET",
-      "output_encoding": "json",
+      "output_encoding": "no-op",
+      "input_headers": [
+        "Cookie"
+      ],
       "backend": [
         {
           "url_pattern": "/api/v1/me",
-          "encoding": "json",
+          "encoding": "no-op",
           "sd": "static",
           "method": "GET",
           "host": ["http://auth-service:8000"]
@@ -66,11 +81,15 @@
     {
       "endpoint": "/api/auth/password-reset-request",
       "method": "POST",
-      "output_encoding": "json",
+      "output_encoding": "no-op",
+      "input_headers": [
+        "Content-Type",
+        "Cookie"
+      ],
       "backend": [
         {
           "url_pattern": "/api/v1/password-reset-request",
-          "encoding": "json",
+          "encoding": "no-op",
           "sd": "static",
           "method": "POST",
           "host": ["http://auth-service:8000"]
@@ -80,11 +99,15 @@
     {
       "endpoint": "/api/auth/password-reset-confirm",
       "method": "POST",
-      "output_encoding": "json",
+      "output_encoding": "no-op",
+      "input_headers": [
+        "Content-Type",
+        "Cookie"
+      ],
       "backend": [
         {
           "url_pattern": "/api/v1/password-reset-confirm",
-          "encoding": "json",
+          "encoding": "no-op",
           "sd": "static",
           "method": "POST",
           "host": ["http://auth-service:8000"]
@@ -94,11 +117,15 @@
     {
       "endpoint": "/api/auth/role-request",
       "method": "POST",
-      "output_encoding": "json",
+      "output_encoding": "no-op",
+      "input_headers": [
+        "Content-Type",
+        "Cookie"
+      ],
       "backend": [
         {
           "url_pattern": "/api/v1/role-request",
-          "encoding": "json",
+          "encoding": "no-op",
           "sd": "static",
           "method": "POST",
           "host": ["http://auth-service:8000"]

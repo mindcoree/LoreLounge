@@ -186,6 +186,20 @@ services:
       auth-service:
         condition: service_healthy
 
+  # Frontend (Next.js) — отдаётся через Nginx
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: lorelounge_frontend
+    restart: always
+    networks:
+      - lorelounge_net
+    environment:
+      # Next proxy (/api/ll/*) будет ходить в Nginx внутри docker-сети
+      - LORELOUNGE_API_BASE=http://nginx/api
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
   # Nginx — единственная публичная точка входа
   nginx:
     image: nginx:alpine
@@ -199,6 +213,7 @@ services:
       - ../gateway/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - krakend
+      - frontend
 
 volumes:
   postgres_auth_data: # данные auth-service БД
