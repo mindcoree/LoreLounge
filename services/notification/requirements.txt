@@ -1,3 +1,4 @@
-faststream[rabbit]
+faststream[rabbit,cli]
 aiosmtplib
 pydantic-settings
+pydantic[email]
