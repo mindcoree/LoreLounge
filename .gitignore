@@ -1,0 +1,52 @@
+# =========================
+# Секреты и конфигурации (САМОЕ ВАЖНОЕ)
+# =========================
+.env
+.env.*
+*.pem
+credentials.json
+
+# =========================
+# Python & FastAPI
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Виртуальные окружения Python
+venv/
+.venv/
+env/
+.env_python/
+
+# =========================
+# Frontend (React / Node.js)
+# =========================
+node_modules/
+build/
+dist/
+.npm/
+
+.services/authentication/src/certs/*.pem
+# =========================
+# Базы данных и Инфраструктура
+# =========================
+# Если примонтируешь локальные папки в Docker для сохранения данных
+docker_data/
+postgres_data/
+mongo_data/
+redis_data/
+minio_data/
+rabbitmq_data/
+
+# =========================
+# IDE и ОС
+# =========================
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
