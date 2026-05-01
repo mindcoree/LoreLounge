@@ -1,93 +1,95 @@
+"""
+Утилиты безопасности: JWT (RS256) + bcrypt.
+
+Все CPU-bound операции (bcrypt, jwt.encode/decode) выполняются в thread pool
+через asyncio.to_thread — event loop не блокируется.
+
+⚠️  Параметры-по-умолчанию (private_key, algorithm и т.д.) вычисляются
+    при первом реальном вызове функции, а НЕ при импорте модуля, чтобы
+    избежать ошибок «settings не загружены».
+"""
+
 import asyncio
-import bcrypt
-import jwt
+import logging
 from datetime import datetime, timezone, timedelta
 from functools import lru_cache
-from common.config import settings
-from auth.schemas import AuthEntitySchema
-from common.type.jwt import TOKEN_TYPE_FIELD, ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
+
+import bcrypt
+import jwt
 from fastapi import Response
 
-# Cookie secure flag: True для production (HTTPS), False для local dev
+from core.config import settings
+from core.types import TOKEN_TYPE_FIELD, ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
+from domain.entity.schemas import AuthEntitySchema
+
+logger = logging.getLogger(__name__)
+
+# Cookie secure flag: False для dev, True для prod (HTTPS)
 COOKIE_SECURE = False
+
+
+# ── Ключи ────────────────────────────────────────────────────────────────────
 
 
 @lru_cache(maxsize=1)
 def get_private_key() -> str:
-    """
-    Считывает и кэширует приватный ключ для подписи JWT.
-
-    Returns:
-        Содержимое приватного ключа в виде строки.
-    """
+    """Читает и кэширует приватный RSA-ключ для подписи JWT."""
     return settings.auth.private_key.read_text()
 
 
 @lru_cache(maxsize=1)
 def get_public_key() -> str:
-    """
-    Считывает и кэширует публичный ключ для верификации JWT.
-
-    Returns:
-        Содержимое публичного ключа в виде строки.
-    """
+    """Читает и кэширует публичный RSA-ключ для верификации JWT."""
     return settings.auth.public_key.read_text()
+
+
+# ── JWT encode / decode ──────────────────────────────────────────────────────
 
 
 async def encode_jwt(
     payload: dict,
-    private_key: str = get_private_key(),
-    algorithm: str = settings.auth.algorithm,
-    expire_minute: int = settings.auth.access_expire_min,
+    expire_minute: int | None = None,
     expire_timedelta: timedelta | None = None,
 ) -> str:
     """
-    Кодирует данные в JWT.
+    Создаёт подписанный JWT.
 
-    Args:
-        payload: Данные для кодирования.
-        private_key: Приватный ключ для подписи.
-        algorithm: Алгоритм подписи.
-        expire_minute: Время жизни токена в минутах.
-        expire_timedelta: Время жизни токена в виде timedelta.
-
-    Returns:
-        Сгенерированный JWT в виде строки.
+    Срок жизни определяется:
+      1. expire_timedelta — если передан явно;
+      2. expire_minute — если передан;
+      3. settings.auth.access_expire_min — дефолт.
     """
-    now = datetime.now(timezone.utc)
-    if expire_timedelta:
-        expire = now + expire_timedelta
-    else:
-        expire = now + timedelta(minutes=expire_minute)
+    private_key = get_private_key()
+    algorithm = settings.auth.algorithm
 
-    payload.update(
-        exp=int(expire.timestamp()),
-        iat=int(now.timestamp()),
-    )
+    now = datetime.now(timezone.utc)
+    if expire_timedelta is not None:
+        expire = now + expire_timedelta
+    elif expire_minute is not None:
+        expire = now + timedelta(minutes=expire_minute)
+    else:
+        expire = now + timedelta(minutes=settings.auth.access_expire_min)
+
+    to_encode = payload.copy()
+    to_encode.update(exp=int(expire.timestamp()), iat=int(now.timestamp()))
+
     return await asyncio.to_thread(
         jwt.encode,
-        payload=payload,
+        payload=to_encode,
         key=private_key,
         algorithm=algorithm,
     )
 
 
-async def decode_jwt(
-    token: str,
-    public_key: str = get_public_key(),
-    algorithm: str = settings.auth.algorithm,
-) -> dict:
+async def decode_jwt(token: str) -> dict:
     """
-    Декодирует JWT и возвращает его полезную нагрузку.
+    Декодирует и верифицирует JWT.
 
-    Args:
-        token: JWT для декодирования.
-        public_key: Публичный ключ для верификации.
-        algorithm: Алгоритм подписи.
-
-    Returns:
-        Полезная нагрузка (payload) токена.
+    Raises jwt.exceptions.InvalidTokenError при невалидном/просроченном токене.
     """
+    public_key = get_public_key()
+    algorithm = settings.auth.algorithm
+
     return await asyncio.to_thread(
         jwt.decode,
         jwt=token,
@@ -96,121 +98,85 @@ async def decode_jwt(
     )
 
 
+# ── Пароли ───────────────────────────────────────────────────────────────────
+
+
 async def hash_password(password: str) -> str:
-    """
-    Хеширует пароль с использованием bcrypt.
-
-    Args:
-        password: Пароль в открытом виде.
-
-    Returns:
-        Хешированный пароль в виде строки.
-    """
+    """Хеширует пароль через bcrypt в thread pool (CPU-bound)."""
+    password_bytes = password.encode("utf-8")
     salt = bcrypt.gensalt()
-    password_bytes: bytes = password.encode()
-    hashed_password: bytes = await asyncio.to_thread(
-        bcrypt.hashpw, password_bytes, salt
-    )
-    return hashed_password.decode("utf-8")
+    hashed: bytes = await asyncio.to_thread(bcrypt.hashpw, password_bytes, salt)
+    return hashed.decode("utf-8")
 
 
-async def verify_password(password: str, hashed_password) -> bool:
+async def verify_password(password: str, hashed_password: str | bytes) -> bool:
     """
-    Проверяет, соответствует ли пароль хешу.
+    Проверяет пароль против bcrypt-хеша.
 
-    Args:
-        password: Пароль в открытом виде.
-        hashed_password: Хешированный пароль для сравнения.
-
-    Returns:
-        True, если пароль верный, иначе False.
+    Принимает хеш как str или bytes — оба случая корректно обрабатываются.
     """
+    password_bytes = password.encode("utf-8")
+    if isinstance(hashed_password, str):
+        hashed_bytes = hashed_password.encode("utf-8")
+    else:
+        hashed_bytes = hashed_password
+
     return await asyncio.to_thread(
         bcrypt.checkpw,
-        password=password.encode(),
-        hashed_password=hashed_password.encode(),
+        password=password_bytes,
+        hashed_password=hashed_bytes,
     )
 
 
-async def create_jwt(
+# ── Построение токенов ───────────────────────────────────────────────────────
+
+
+def create_payload(auth_payload: AuthEntitySchema) -> dict:
+    """Формирует стандартный payload для access-токена."""
+    return {
+        "sub": str(auth_payload.id),
+        "login": auth_payload.login,
+        "email": auth_payload.email,
+        "role": auth_payload.role,
+    }
+
+
+async def _create_jwt(
     token_data: dict,
     token_type: str,
-    expire_minutes: int = settings.auth.access_expire_min,
+    expire_minute: int | None = None,
     expire_timedelta: timedelta | None = None,
 ) -> str:
-    """
-    Создает JWT определенного типа (access или refresh).
-
-    Args:
-        token_data: Данные для включения в токен.
-        token_type: Тип токена (например, 'access' или 'refresh').
-        expire_minutes: Время жизни токена в минутах.
-        expire_timedelta: Время жизни токена в виде timedelta.
-
-    Returns:
-        Сгенерированный JWT.
-    """
     payload = {TOKEN_TYPE_FIELD: token_type}
     payload.update(token_data)
     return await encode_jwt(
         payload=payload,
-        expire_minute=expire_minutes,
+        expire_minute=expire_minute,
         expire_timedelta=expire_timedelta,
     )
 
 
 async def create_access_token(auth_info: AuthEntitySchema) -> str:
-    """
-    Создает access-токен для аутентифицированной сущности.
-
-    Args:
-        auth_info: Данные аутентифицированной сущности.
-
-    Returns:
-        Сгенерированный access-токен.
-    """
+    """Создаёт access-токен (RS256, срок = access_expire_min)."""
     payload = create_payload(auth_payload=auth_info)
-    return await create_jwt(
+    return await _create_jwt(
         token_data=payload,
         token_type=ACCESS_TOKEN_TYPE,
-        expire_minutes=settings.auth.access_expire_min,
+        expire_minute=settings.auth.access_expire_min,
     )
 
 
 async def create_refresh_token(auth_info: AuthEntitySchema) -> str:
-    """
-    Создает refresh-токен для аутентифицированной сущности.
-
-    Args:
-        auth_info: Данные аутентифицированной сущности.
-
-    Returns:
-        Сгенерированный refresh-токен.
-    """
+    """Создаёт refresh-токен (RS256, срок = refresh_expire_days)."""
     payload = {"sub": str(auth_info.id)}
-    return await create_jwt(
-        token_type=REFRESH_TOKEN_TYPE,
+    return await _create_jwt(
         token_data=payload,
+        token_type=REFRESH_TOKEN_TYPE,
         expire_timedelta=timedelta(days=settings.auth.refresh_expire_days),
     )
 
 
-def create_payload(auth_payload: AuthEntitySchema) -> dict:
-    """
-    Формирует стандартную полезную нагрузку для access-токена.
-
-    Args:
-        auth_payload: Данные аутентифицированной сущности.
-
-    Returns:
-        Словарь с данными для JWT.
-    """
-    return {
-        "sub": str(auth_payload.id),
-        "login": auth_payload.login,
-        "email":auth_payload.email,
-        "role": auth_payload.role,
-    }
+# ── Cookie ───────────────────────────────────────────────────────────────────
 
 
 async def set_token_cookie(
@@ -222,17 +188,7 @@ async def set_token_cookie(
     samesite: str = "lax",
     secure: bool = COOKIE_SECURE,
 ) -> None:
-    """
-    Устанавливает токен в http-only cookie.
-    Args:
-        response: Объект FastAPI Response.
-        key: Имя cookie.
-        value: Значение cookie (токен).
-        max_age: Время жизни cookie в секундах.
-        httponly: Флаг, запрещающий доступ к cookie из JavaScript.
-        secure: Флаг, требующий HTTPS для передачи cookie.
-        samesite: Политика SameSite для защиты от CSRF.
-    """
+    """Устанавливает JWT в http-only cookie."""
     response.set_cookie(
         key=key,
         value=value,

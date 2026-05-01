@@ -1,31 +1,55 @@
 from enum import Enum
 
 
-# class Role(str, Enum):
-#     ADMIN = "admin"
-#     STUDENT = "student"
-#     TEACHER = "teacher"
-#     SPECIALIST = "specialist"
+"""
+READER
+    читает новеллы
+    сохраняет в библиотеку
+    комментирует
+    ставит оценки
+    базовый пользователь
+
+AUTHOR
+    публикует оригинальные новеллы
+    управляет своими главами
+    видит статистику
+
+TRANSLATOR
+    переводит главы
+    может работать с AI-переводами
+    отправляет на проверку
+
+MODERATOR
+    удаляет комментарии
+    банит пользователей
+    проверяет переводы/главы
+
+ADMIN
+    всё выше
+    управление ролями
+    системные настройки
+"""
 
 
-# class RoleRequestStatus(str, Enum):
-#     PENDING = "pending"
-#     APPROVED = "approved"
-#     REJECTED = "rejected"
+class Role(str, Enum):
+    ADMIN = "admin"
+    READER = "reader"
+    AUTHOR = "author"
+    TRANSLATOR = "translator"
+    MODERATOR = "moderator"
 
 
-# class DesiredRole(str, Enum):
-#     STUDENT = "student"
-#     TEACHER = "teacher"
-#     SPECIALIST = "specialist"
+class DesiredRole(str, Enum):
+    """Роли, на которые можно подать заявку при регистрации."""
+    READER = "reader"
+    AUTHOR = "author"
+    TRANSLATOR = "translator"
+    MODERATOR = "moderator"
+    # STUDENT используется как алиас дефолтной роли READER для совместимости
+    STUDENT = "reader"
 
 
-# class TestStatus(str, Enum):
-#     DRAFT = "DRAFT"
-#     PUBLISHED = "PUBLISHED"
-#     ARCHIVED = "ARCHIVED"
-
-
-# class TestAttemptStatus(str, Enum):
-#     IN_PROGRESS = "IN_PROGRESS"
-#     COMPLETED = "COMPLETED"
+class RoleRequestStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"

@@ -1,0 +1,70 @@
+"""
+Точка входа auth-service.
+
+Запуск:
+    uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+"""
+
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from core.config import settings
+from infrastructure.db.session import db_helper
+from api.v1.auth import router as auth_router
+from api.v1.roles import router as roles_router
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(name)s — %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+# ── Lifespan ──────────────────────────────────────────────────────────────────
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Управление жизненным циклом: создаём пул при старте, закрываем при остановке."""
+    logger.info("🚀 auth-service запускается…")
+    yield
+    logger.info("🛑 auth-service останавливается, закрываем пул соединений…")
+    await db_helper.dispose()
+
+
+# ── Приложение ────────────────────────────────────────────────────────────────
+
+
+app = FastAPI(
+    title="LoreLounge — Auth Service",
+    description="Микросервис аутентификации и авторизации для платформы LoreLounge.",
+    version="0.1.0",
+    lifespan=lifespan,
+    docs_url="/api/v1/docs",
+    redoc_url="/api/v1/redoc",
+    openapi_url="/api/v1/openapi.json",
+)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors.origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Роуты
+app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
+app.include_router(roles_router, prefix="/api/v1/role-requests", tags=["role-requests"])
+
+
+# ── Health-check ──────────────────────────────────────────────────────────────
+
+
+@app.get("/healthz", tags=["infra"], summary="Проверка работоспособности сервиса")
+async def health_check() -> dict:
+    return {"status": "ok", "service": "auth-service"}

@@ -1,0 +1,168 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  АРХИТЕКТУРА: DATABASE PER SERVICE                                           ║
+# ║  Каждый микросервис имеет свою изолированную базу данных.                    ║
+# ║  Сервисы не имеют прямого доступа к БД друг друга.                           ║
+# ║                                                                              ║
+# ║  Запуск из корня проекта:                                                    ║
+# ║    docker-compose -f infra/docker-compose.yml up --build                    ║
+# ║  Или просто: make up (если используешь Makefile)                             ║
+# ║                                                                              ║
+# ║  Снаружи доступен ТОЛЬКО Nginx на порту 80.                                  ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+networks:
+  # Сервисная сеть — KrakenD видит все микросервисы, Nginx видит KrakenD
+  lorelounge_net:
+    driver: bridge
+
+  # Изолированная сеть БД auth-service — только auth-service имеет доступ
+  auth_db_net:
+    driver: bridge
+    # internal: true # 🔒 Закомментировано, чтобы можно было пробросить порт 5432 для DataGrip
+  # --- Шаблон для будущих сервисов ---
+  # content_db_net:
+  #   driver: bridge
+  #   internal: true
+  #
+  # user_db_net:
+  #   driver: bridge
+  #   internal: true
+
+
+services:
+
+  # ════════════════════════════════════════════════════════════════════
+  #  AUTH SERVICE + его личная БД
+  # ════════════════════════════════════════════════════════════════════
+
+  # PostgreSQL — только для auth-service
+  postgres_auth:
+    image: postgres:15-alpine
+    container_name: lorelounge_postgres_auth
+    restart: always
+    networks:
+      - auth_db_net
+    ports:
+      - "5432:5432" # Проброс порта для DataGrip
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER:-auth_admin}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-auth_secret}
+      POSTGRES_DB: ${AUTH_DB_NAME:-lorelounge_auth}
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+      # init.sql выполняется один раз при первом старте (создаёт расширения)
+      - ./postgres/auth/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_DB_USER:-auth_admin} -d ${AUTH_DB_NAME:-lorelounge_auth}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis — только для auth-service (кэш JWT, blacklist токенов)
+  redis_auth:
+    image: redis:7-alpine
+    container_name: lorelounge_redis_auth
+    restart: always
+    networks:
+      - auth_db_net
+    command: redis-server --appendonly yes --requirepass ${REDIS_AUTH_PASSWORD:-redis_auth_secret}
+    volumes:
+      - redis_auth_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_AUTH_PASSWORD:-redis_auth_secret}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ../services/authentication
+      dockerfile: Dockerfile
+    container_name: lorelounge_auth
+    restart: always
+    networks:
+      - lorelounge_net # виден для KrakenD
+      - auth_db_net # видит ТОЛЬКО свои postgres_auth и redis_auth
+    depends_on:
+      postgres_auth:
+        condition: service_healthy
+      redis_auth:
+        condition: service_healthy
+    env_file:
+      - ../services/authentication/.env # app-уровень: JWT, SMTP, FRONTEND_URL
+    environment:
+      # Переопределяем только то, что зависит от Docker-сети:
+      # docker hostname postgres_auth недоступен снаружи контейнера
+      CONFIG__DB__URL: postgresql+asyncpg://${AUTH_DB_USER:-auth_admin}:${AUTH_DB_PASSWORD:-auth_secret}@postgres_auth:5432/${AUTH_DB_NAME:-lorelounge_auth}
+      CONFIG__DB__ECHO: "false"
+      CONFIG__DB__POOL_SIZE: "20"
+      CONFIG__DB__MAX_OVERFLOW: "10"
+    volumes:
+      - ../services/authentication/certs:/app/certs:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')\"" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ════════════════════════════════════════════════════════════════════
+  #  БУДУЩИЕ СЕРВИСЫ (шаблон)
+  # ════════════════════════════════════════════════════════════════════
+
+  # --- content-service (новеллы, главы, переводы) ---
+  # postgres_content:
+  #   image: postgres:15-alpine
+  #   networks: [content_db_net]
+  #   environment:
+  #     POSTGRES_DB: lorelounge_content
+  #   volumes:
+  #     - postgres_content_data:/var/lib/postgresql/data
+  #     - ./postgres/content/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+  #
+  # content-service:
+  #   build:
+  #     context: ../services/content
+  #   networks:
+  #     - lorelounge_net   # виден KrakenD
+  #     - content_db_net   # видит свою БД, НЕ видит auth БД
+
+
+  # ════════════════════════════════════════════════════════════════════
+  #  ИНФРАСТРУКТУРА (шлюзы)
+  # ════════════════════════════════════════════════════════════════════
+
+  # KrakenD — API Gateway (видит все сервисы, не видит БД)
+  krakend:
+    image: devopsfaith/krakend:2.5
+    container_name: lorelounge_krakend
+    restart: always
+    networks:
+      - lorelounge_net
+    volumes:
+      - ../gateway/krakend.json:/etc/krakend/krakend.json:ro
+    depends_on:
+      auth-service:
+        condition: service_healthy
+
+  # Nginx — единственная публичная точка входа
+  nginx:
+    image: nginx:alpine
+    container_name: lorelounge_nginx
+    restart: always
+    networks:
+      - lorelounge_net
+    ports:
+      - "80:80" # ✅ единственный публичный порт
+    volumes:
+      - ../gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - krakend
+
+volumes:
+  postgres_auth_data: # данные auth-service БД
+  redis_auth_data:
+    # кэш auth-service
+    # postgres_content_data:
+    # postgres_user_data:

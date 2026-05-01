@@ -1,0 +1,109 @@
+{
+  "$schema": "https://www.krakend.io/schema/v3.json",
+  "version": 3,
+  "name": "LoreLounge API Gateway",
+  "port": 8080,
+  "timeout": "5000ms",
+  "cache_ttl": "300s",
+  "output_encoding": "json",
+  "endpoints": [
+    {
+      "endpoint": "/api/auth/register",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/register",
+          "encoding": "json",
+          "sd": "static",
+          "method": "POST",
+          "host": ["http://auth-service:8000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/login",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/login",
+          "encoding": "json",
+          "sd": "static",
+          "method": "POST",
+          "host": ["http://auth-service:8000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/logout",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/logout",
+          "encoding": "json",
+          "sd": "static",
+          "method": "POST",
+          "host": ["http://auth-service:8000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/me",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/me",
+          "encoding": "json",
+          "sd": "static",
+          "method": "GET",
+          "host": ["http://auth-service:8000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/password-reset-request",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/password-reset-request",
+          "encoding": "json",
+          "sd": "static",
+          "method": "POST",
+          "host": ["http://auth-service:8000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/password-reset-confirm",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/password-reset-confirm",
+          "encoding": "json",
+          "sd": "static",
+          "method": "POST",
+          "host": ["http://auth-service:8000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/role-request",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/role-request",
+          "encoding": "json",
+          "sd": "static",
+          "method": "POST",
+          "host": ["http://auth-service:8000"]
+        }
+      ]
+    }
+  ]
+}
