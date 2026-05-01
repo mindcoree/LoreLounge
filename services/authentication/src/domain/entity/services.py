@@ -17,7 +17,8 @@ from core import security as auth
 from core.config import settings
 from core.types import TOKEN_TYPE_FIELD, REFRESH_TOKEN_TYPE, ACCESS_TOKEN_COOKIE_KEY, REFRESH_TOKEN_COOKIE_KEY
 from domain.common.enums import Role, DesiredRole, RoleRequestStatus
-from domain.entity.repository import AuthRepository, RoleRequestRepository
+from domain.entity.repository import AuthRepository
+from domain.role_requests.repository import RoleRequestRepository
 from domain.entity.schemas import (
     AccessTokenPayload,
     AuthEntityIn,
@@ -25,8 +26,8 @@ from domain.entity.schemas import (
     PasswordResetRequest,
     PasswordResetConfirm,
     PasswordResetResponse,
-    RoleRequestCreate,
 )
+from domain.role_requests.schemas import RoleRequestCreate
 from infrastructure.db.models import AuthEntity, RoleRequest
 
 logger = logging.getLogger(__name__)
