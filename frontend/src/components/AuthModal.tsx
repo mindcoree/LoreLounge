@@ -65,7 +65,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       } else if (mode === "forgot") {
         const res = await llFetchJson<{ detail: string }>("/auth/password-reset-request", {
           method: "POST",
-          form: { email: form.email },
+          body: JSON.stringify({ email: form.email }),
         });
 
         if (res.ok) {

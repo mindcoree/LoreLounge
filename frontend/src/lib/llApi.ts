@@ -53,7 +53,7 @@ export async function llFetchJson<T>(
     body = new URLSearchParams(init.form);
     headers.set("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
   } else if (body && typeof body === "string" && !headers.has("content-type")) {
-    // JSON body already set by caller
+    headers.set("content-type", "application/json");
   }
 
   const res = await fetch(url, {
