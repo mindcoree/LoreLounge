@@ -1,10 +1,6 @@
 import logging
 from faststream import FastStream
-from faststream.rabbit import RabbitBroker
-from pydantic import BaseModel, EmailStr
-
 from core.config import settings
-from services.email import send_email
 
 logging.basicConfig(
     level=logging.INFO,
@@ -12,12 +8,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-broker = RabbitBroker(settings.rabbitmq_url)
-app = FastStream(broker)
+from infrastructure.broker.rabbitmq import broker
+from domain.notification.schemas import PasswordResetNotification
+from infrastructure.email.smtp import send_email
 
-class PasswordResetNotification(BaseModel):
-    to_email: EmailStr
-    reset_link: str
+app = FastStream(broker)
 
 @broker.subscriber("password_reset_queue")
 async def handle_password_reset(msg: PasswordResetNotification):

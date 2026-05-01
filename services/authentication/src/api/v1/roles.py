@@ -7,7 +7,7 @@ from fastapi import APIRouter, status, Query
 
 from api.dependencies import PayloadEntity, RoleRequestServiceDep
 from domain.common.enums import RoleRequestStatus
-from domain.entity.schemas import RoleRequestOut, RoleRequestListOut
+from domain.role_requests.schemas import RoleRequestOut, RoleRequestListOut
 
 router = APIRouter()
 

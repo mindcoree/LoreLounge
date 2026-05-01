@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 auth-service запускается…")
     
     # Стартуем RabbitMQ broker
-    from core.broker import broker
+    from infrastructure.broker.rabbitmq import broker
     await broker.connect()
     logger.info("🐰 Соединение с RabbitMQ установлено")
     

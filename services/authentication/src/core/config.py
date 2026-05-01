@@ -43,20 +43,6 @@ class AuthJWT(BaseModel):
     refresh_expire_days: int = 7
 
 
-class SMTPConfig(BaseModel):
-    """Настройки SMTP (опциональны — email-отправка пропускается, если не задан)."""
-
-    host: str = ""
-    port: int = 587
-    user: str = ""
-    password: str = ""
-    from_email: str = ""
-    use_tls: bool = True
-    use_ssl: bool = False
-
-
-
-
 class CORSConfig(BaseModel):
     origins: list[str] = [
         "http://localhost:3000",
@@ -82,7 +68,6 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DatabaseConfig
     auth: AuthJWT = AuthJWT()
-    smtp: SMTPConfig = SMTPConfig()
     cors: CORSConfig = CORSConfig()
 
     # URL фронтенда для формирования ссылок (password-reset и т.д.)

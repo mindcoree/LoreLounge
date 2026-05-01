@@ -7,9 +7,11 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request, Response, status
 
 from domain.common.enums import Role
-from domain.entity.repository import AuthRepository, RoleRequestRepository
+from domain.entity.repository import AuthRepository
+from domain.role_requests.repository import RoleRequestRepository
 from domain.entity.schemas import AccessTokenPayload
-from domain.entity.services import AuthServices, RoleRequestService
+from domain.entity.services import AuthServices
+from domain.role_requests.services import RoleRequestService
 from infrastructure.db.session import SessionDep
 
 

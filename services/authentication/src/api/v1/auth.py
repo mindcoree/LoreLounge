@@ -14,11 +14,13 @@ from domain.entity.schemas import (
     AuthEntityIn,
     AuthCredentials,
     TokenInfo,
-    RoleRequestCreate,
-    RoleRequestOut,
     PasswordResetRequest,
     PasswordResetConfirm,
     PasswordResetResponse,
+)
+from domain.role_requests.schemas import (
+    RoleRequestCreate,
+    RoleRequestOut,
 )
 
 router = APIRouter()
