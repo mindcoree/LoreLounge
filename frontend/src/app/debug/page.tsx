@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { llFetchJson } from "@/lib/llApi";
 
 export default function DebugPage() {
-  const [path, setPath] = useState("/v1/me");
+  const [path, setPath] = useState("/auth/me");
   const [method, setMethod] = useState<"GET" | "POST">("GET");
   const [form, setForm] = useState(`{}`);
   const [result, setResult] = useState<unknown>(null);
@@ -47,8 +47,8 @@ export default function DebugPage() {
         Debug API
       </h1>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-        Это вызывает Next.js прокси <code className="font-mono">/api/ll*</code> →{" "}
-        <code className="font-mono">http://localhost/api*</code> с cookies.
+        Вызывает API напрямую через <code className="font-mono">/api/*</code>.
+        На сервере идет в шлюз, в браузере — через Nginx.
       </p>
 
       <div className="mt-6 grid gap-3 rounded-2xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-zinc-950">
@@ -71,7 +71,7 @@ export default function DebugPage() {
               className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm text-black dark:border-white/10 dark:bg-black dark:text-zinc-50"
               value={path}
               onChange={(e) => setPath(e.target.value)}
-              placeholder="/v1/me"
+              placeholder="/auth/me"
             />
           </label>
         </div>

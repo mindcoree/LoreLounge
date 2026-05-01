@@ -2,7 +2,8 @@
 API v1: эндпоинты аутентификации LoreLounge.
 """
 
-from fastapi import APIRouter, BackgroundTasks, Form, Response, status
+from fastapi import APIRouter, Response, status, HTTPException, Form
+import logging
 from typing import Annotated
 
 from api.dependencies import AuthServiceDep, PayloadEntity, RoleRequestServiceDep
@@ -24,6 +25,7 @@ from domain.role_requests.schemas import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 # ── Регистрация ───────────────────────────────────────────────────────────────
@@ -156,3 +158,22 @@ async def password_reset_confirm(
 ) -> PasswordResetResponse:
     """Принимает токен + новый пароль и обновляет хеш в БД."""
     return await service.password_reset_confirm(data)
+
+
+# ── JWKS (для KrakenD) ────────────────────────────────────────────────────────
+
+
+@router.get("/.well-known/jwks.json", tags=["infra"])
+async def get_jwks():
+    """
+    Возвращает JWKS (параметры ключа закэшированы в security.py).
+    """
+    try:
+        jwk = auth.get_jwk_params()
+        return {"keys": [jwk]}
+    except Exception as e:
+        logger.error("JWKS Error: %s", str(e))
+        raise HTTPException(
+            status_code=500, 
+            detail="Error generating security keys"
+        )

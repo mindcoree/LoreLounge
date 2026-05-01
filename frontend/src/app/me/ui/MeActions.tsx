@@ -10,7 +10,7 @@ export default function MeActions() {
   async function refresh() {
     setPending(true);
     try {
-      const res = await llFetchJson<unknown>("/v1/me", { method: "GET" });
+      const res = await llFetchJson<unknown>("/auth/me", { method: "GET" });
       setLast(res);
     } finally {
       setPending(false);
@@ -20,7 +20,7 @@ export default function MeActions() {
   async function logout() {
     setPending(true);
     try {
-      const res = await llFetchJson<void>("/v1/logout", { method: "POST" });
+      const res = await llFetchJson<void>("/auth/logout", { method: "POST" });
       setLast(res);
     } finally {
       setPending(false);

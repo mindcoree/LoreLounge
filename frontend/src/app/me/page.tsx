@@ -1,34 +1,13 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { llFetchJson } from "@/lib/llApi";
 import MeActions from "./ui/MeActions";
 
+export const dynamic = "force-dynamic";
+
 async function fetchMe() {
-  const cookieStore = await cookies();
-  const cookie = cookieStore
-    .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
-    .join("; ");
-
-  // Важно: это выполняется на сервере (в контейнере frontend), поэтому
-  // можем обращаться к самому Next.js по docker hostname.
-  const res = await fetch("http://frontend:3000/api/ll/v1/me", {
-    method: "GET",
-    headers: {
-      cookie,
-      accept: "application/json",
-    },
-    cache: "no-store",
-  });
-
-  const text = await res.text();
-  let raw: unknown = null;
-  try {
-    raw = text ? JSON.parse(text) : null;
-  } catch {
-    raw = text;
-  }
-
-  return { ok: res.ok, status: res.status, raw };
+  // llFetchJson сам добавит куки на сервере и выберет правильный baseUrl
+  return await llFetchJson<any>("/auth/me");
 }
 
 export default async function MePage() {

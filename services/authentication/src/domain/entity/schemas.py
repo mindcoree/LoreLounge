@@ -66,7 +66,7 @@ class AccessTokenPayload(BaseModel):
     """Payload access-токена, извлекаемый из JWT."""
 
     sub: str
-    login: str
+    login: Optional[str] = ""
     role: Role
     email: EmailStr
 

@@ -8,7 +8,7 @@ export default function Home() {
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400">
             Мини-фронт для проверки авторизации (cookie, /me, logout) через
-            встроенный прокси Next.js.
+            API Gateway.
           </p>
         </header>
 
@@ -19,7 +19,7 @@ export default function Home() {
           >
             <div className="font-medium">Вход</div>
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              POST /api/v1/login (form) + cookie
+              POST /api/auth/login (form) + cookie
             </div>
           </a>
           <a
@@ -28,7 +28,7 @@ export default function Home() {
           >
             <div className="font-medium">Регистрация</div>
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              POST /api/v1/register (form)
+              POST /api/auth/register (form)
             </div>
           </a>
           <a
@@ -37,7 +37,7 @@ export default function Home() {
           >
             <div className="font-medium">Профиль (/me)</div>
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              GET /api/v1/me (cookie)
+              GET /api/auth/me (cookie)
             </div>
           </a>
           <a
@@ -52,7 +52,7 @@ export default function Home() {
         </section>
 
         <footer className="text-xs text-zinc-500 dark:text-zinc-500">
-          API проксируется на `http://localhost/api/*` (Nginx → KrakenD → auth).
+          API вызывается через `http://localhost/api/auth/*` (Nginx → KrakenD → auth).
         </footer>
       </main>
     </div>

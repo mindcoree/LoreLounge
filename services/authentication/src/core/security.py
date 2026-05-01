@@ -16,6 +16,8 @@ from functools import lru_cache
 
 import bcrypt
 import jwt
+import base64
+from cryptography.hazmat.primitives import serialization
 from fastapi import Response
 
 from core.config import settings
@@ -41,6 +43,28 @@ def get_private_key() -> str:
 def get_public_key() -> str:
     """Читает и кэширует публичный RSA-ключ для верификации JWT."""
     return settings.auth.public_key.read_text()
+
+
+@lru_cache(maxsize=1)
+def get_jwk_params() -> dict:
+    """Извлекает RSA-параметры (n, e) для JWKS."""
+    public_key_pem = get_public_key()
+    public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
+    numbers = public_key.public_numbers()
+
+    def b64url(n: int) -> str:
+        size = (n.bit_length() + 7) // 8
+        b = n.to_bytes(size, byteorder='big')
+        return base64.urlsafe_b64encode(b).decode('utf-8').rstrip('=')
+
+    return {
+        "kty": "RSA",
+        "alg": "RS256",
+        "use": "sig",
+        "kid": "lorelounge-key",
+        "n": b64url(numbers.n),
+        "e": b64url(numbers.e)
+    }
 
 
 # ── JWT encode / decode ──────────────────────────────────────────────────────
@@ -78,6 +102,7 @@ async def encode_jwt(
         payload=to_encode,
         key=private_key,
         algorithm=algorithm,
+        headers={"kid": "lorelounge-key"},
     )
 
 

@@ -10,6 +10,7 @@ from datetime import timedelta
 from typing import Optional
 
 from fastapi import HTTPException, status, Response, Request
+import jwt
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.exc import IntegrityError
 
@@ -153,33 +154,25 @@ class AuthServices:
         self, request: Request, response: Response
     ) -> AccessTokenPayload:
         """
-        Извлекает payload из access-токена.
-
-        Порядок:
-        1. Middleware уже декодировал → берём из request.state.auth_payload.
-        2. Middleware пометил needs_refresh → обновляем через refresh-токен.
-        3. Ничего нет → 401.
+        Извлекает payload. Приоритет — заголовки от KrakenD Gateway.
         """
-        payload = getattr(request.state, "auth_payload", None)
-        if payload:
-            return AccessTokenPayload(**payload)
+        # 1. Проверяем заголовки от KrakenD (Source of Truth)
+        user_id = request.headers.get("x-user-id")
+        user_role = request.headers.get("x-user-role")
+        user_email = request.headers.get("x-user-email")
 
-        if getattr(request.state, "token_needs_refresh", False):
-            refresh_token = request.cookies.get(REFRESH_TOKEN_COOKIE_KEY)
-            if not refresh_token:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Требуется аутентификация",
-                )
-            entity = await self.refresh_authentication(
-                response=response, refresh_token=refresh_token
+        if user_id and user_role:
+            return AccessTokenPayload(
+                sub=str(user_id),
+                login="", # KrakenD не прокидывает логин, нам достаточно ID/Email
+                role=Role(user_role),
+                email=user_email or ""
             )
-            payload_dict = auth.create_payload(auth_payload=entity)
-            return AccessTokenPayload(**payload_dict)
 
+        # 2. Если заголовков нет — значит запрос пришел не через Gateway
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Требуется аутентификация",
+            detail="Требуется аутентификация через Gateway",
         )
 
     # ── Сброс пароля ─────────────────────────────────────────────────────────

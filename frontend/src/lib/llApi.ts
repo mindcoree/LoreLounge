@@ -23,9 +23,30 @@ export async function llFetchJson<T>(
   path: string,
   init?: RequestInit & { form?: Record<string, string> },
 ): Promise<ApiResult<T>> {
-  const url = path.startsWith("/") ? `/api/ll${path}` : `/api/ll/${path}`;
+  const isServer = typeof window === "undefined";
+  const baseUrl = isServer
+    ? process.env.LORELOUNGE_API_BASE?.replace(/\/$/, "") ?? "http://krakend:8080/api"
+    : "/api";
+
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${baseUrl}${cleanPath}`;
 
   const headers = new Headers(init?.headers);
+
+  if (isServer) {
+    try {
+      const { cookies } = await import("next/headers");
+      const cookieStore = await cookies();
+      const cookieString = cookieStore
+        .getAll()
+        .map(({ name, value }) => `${name}=${value}`)
+        .join("; ");
+      if (cookieString) headers.set("cookie", cookieString);
+    } catch {
+      // Игнорируем ошибки (например, если вызвано в статическом рендеринге)
+    }
+  }
+
   let body = init?.body;
 
   if (init?.form) {

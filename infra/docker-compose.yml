@@ -182,6 +182,7 @@ services:
       - lorelounge_net
     volumes:
       - ../gateway/krakend.json:/etc/krakend/krakend.json:ro
+      - ../services/authentication/certs/public_key.pem:/etc/krakend/certs/public_key.pem:ro
     depends_on:
       auth-service:
         condition: service_healthy
@@ -197,7 +198,7 @@ services:
       - lorelounge_net
     environment:
       # Next proxy (/api/ll/*) будет ходить в Nginx внутри docker-сети
-      - LORELOUNGE_API_BASE=http://nginx/api
+      - LORELOUNGE_API_BASE=http://krakend:8080/api
       - PORT=3000
       - HOSTNAME=0.0.0.0
   # Nginx — единственная публичная точка входа

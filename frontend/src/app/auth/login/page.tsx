@@ -17,7 +17,7 @@ export default function LoginPage() {
     setPending(true);
     setResult(null);
     try {
-      const res = await llFetchJson<TokenInfo>("/v1/login", {
+      const res = await llFetchJson<TokenInfo>("/auth/login", {
         method: "POST",
         form: { email, password },
       });
@@ -37,7 +37,7 @@ export default function LoginPage() {
 
       <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">Вход</h1>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-        Отправляет форму на <code className="font-mono">/api/v1/login</code> и получает cookie.
+        Отправляет форму на <code className="font-mono">/api/auth/login</code> и получает cookie.
       </p>
 
       <form onSubmit={onSubmit} className="mt-6 grid gap-4">

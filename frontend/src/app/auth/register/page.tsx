@@ -19,7 +19,7 @@ export default function RegisterPage() {
     setPending(true);
     setResult(null);
     try {
-      const res = await llFetchJson<AuthEntityOut>("/v1/register", {
+      const res = await llFetchJson<AuthEntityOut>("/auth/register", {
         method: "POST",
         form: { email, login, password, role },
       });
@@ -41,7 +41,7 @@ export default function RegisterPage() {
         Регистрация
       </h1>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-        Отправляет форму на <code className="font-mono">/api/v1/register</code>.
+        Отправляет форму на <code className="font-mono">/api/auth/register</code>.
       </p>
 
       <form onSubmit={onSubmit} className="mt-6 grid gap-4">
