@@ -13,8 +13,7 @@ from uuid import UUID
 from typing import Optional
 
 from fastapi import HTTPException, status, Response, Request
-import jwt
-from jwt.exceptions import InvalidTokenError
+from jwt.exceptions import InvalidTokenError # type: ignore
 from sqlalchemy.exc import IntegrityError
 
 from core import security as auth
