@@ -214,21 +214,15 @@ class AuthServices:
                 expire_timedelta=timedelta(minutes=30),
             )
             reset_link = f"{settings.frontend_url}/reset-password?token={token}"
-            body = (
-                f"<p>Для сброса пароля перейдите по ссылке:</p>"
-                f"<p><a href='{reset_link}'>{reset_link}</a></p>"
-                f"<p>Ссылка действительна 30 минут.</p>"
-            )
             
             from core.broker import broker
-            from domain.entity.schemas import EmailNotificationSchema
+            from domain.entity.schemas import PasswordResetNotification
             
-            message = EmailNotificationSchema(
+            message = PasswordResetNotification(
                 to_email=entity.email,
-                subject="Сброс пароля — LoreLounge",
-                body=body,
+                reset_link=reset_link,
             )
-            await broker.publish(message, queue="email_notifications_queue")
+            await broker.publish(message, queue="password_reset_queue")
             
             return generic_response
         except Exception:

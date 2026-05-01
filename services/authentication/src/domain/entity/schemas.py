@@ -116,7 +116,6 @@ class PasswordResetResponse(BaseModel):
 # ── RabbitMQ ─────────────────────────────────────────────────────────────────
 
 
-class EmailNotificationSchema(BaseModel):
+class PasswordResetNotification(BaseModel):
     to_email: EmailStr
-    subject: str
-    body: str
+    reset_link: str
