@@ -76,6 +76,9 @@ export default function LoginPage() {
           <Link className="text-sm text-zinc-600 hover:underline dark:text-zinc-400" href="/auth/register">
             Регистрация
           </Link>
+          <Link className="text-sm text-zinc-600 hover:underline dark:text-zinc-400" href="/reset-password">
+            Сброс пароля
+          </Link>
           <Link className="text-sm text-zinc-600 hover:underline dark:text-zinc-400" href="/me">
             /me
           </Link>

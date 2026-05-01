@@ -4,8 +4,10 @@
 Все схемы работают с LoreLounge-ролями (Role, DesiredRole, RoleRequestStatus).
 """
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from domain.common.enums import Role, DesiredRole, RoleRequestStatus
 from typing import Optional
 
@@ -16,7 +18,7 @@ from typing import Optional
 class AuthEntitySchema(BaseModel):
     """Минимальный набор данных для создания JWT-токенов."""
 
-    id: int
+    id: UUID
     login: str
     role: Role
     email: EmailStr
@@ -39,7 +41,7 @@ class AuthEntityOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: UUID
     login: str
     email: EmailStr
     role: Role

@@ -5,8 +5,11 @@ AuthServices         — регистрация, вход, refresh, payload, с�
 RoleRequestService   — управление заявками на смену роли.
 """
 
+import hashlib
 import logging
-from datetime import timedelta
+import secrets
+from datetime import datetime, timedelta, timezone
+from uuid import UUID
 from typing import Optional
 
 from fastapi import HTTPException, status, Response, Request
@@ -131,7 +134,7 @@ class AuthServices:
                 detail=f"Ожидался refresh-токен, получен: {token_type}",
             )
 
-        entity_id = int(refresh_payload.get("sub"))
+        entity_id = UUID(refresh_payload.get("sub"))
         entity = await self.repo.get_auth_entity_by_id(entity_id)
         if not entity:
             raise HTTPException(
@@ -199,14 +202,13 @@ class AuthServices:
             return generic_response
 
         try:
-            token = await auth.encode_jwt(
-                payload={
-                    "sub": str(entity.id),
-                    "email": entity.email,
-                    "type": "password_reset",
-                },
-                expire_timedelta=timedelta(minutes=30),
-            )
+            await self.repo.cleanup_reset_tokens(datetime.now(timezone.utc))
+            await self.repo.invalidate_reset_tokens(entity.id)
+            token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+            await self.repo.create_reset_token(entity.id, token_hash, expires_at)
+
             reset_link = f"{settings.frontend_url}/reset-password?token={token}"
             from infrastructure.broker.rabbitmq import broker
             from domain.entity.schemas import PasswordResetNotification
@@ -226,24 +228,36 @@ class AuthServices:
         if data.new_password != data.repeat_password:
             raise HTTPException(status_code=400, detail="Пароли не совпадают")
 
-        try:
-            payload = await auth.decode_jwt(data.token)
-        except Exception:
+        await self.repo.cleanup_reset_tokens(datetime.now(timezone.utc))
+
+        # Поддержка двух форматов для удобства разработки/отладки:
+        # - пользователь может прислать сырой токен (как в письме) -> хешируем и ищем
+        # - или прислать уже хеш (например, случайно скопировал из БД) -> ищем напрямую
+        reset_token = await self.repo.get_reset_token_by_hash(data.token)
+        if not reset_token:
+            token_hash = hashlib.sha256(data.token.encode("utf-8")).hexdigest()
+            reset_token = await self.repo.get_reset_token_by_hash(token_hash)
+
+        if not reset_token:
             raise HTTPException(status_code=400, detail="Некорректный или просроченный токен")
 
-        if payload.get("type") != "password_reset":
-            raise HTTPException(status_code=400, detail="Некорректный тип токена")
+        if reset_token.used:
+            raise HTTPException(status_code=400, detail="Токен уже использован")
 
-        entity_id = int(payload.get("sub"))
-        entity = await self.repo.get_auth_entity_by_id(entity_id)
+        now = datetime.now(timezone.utc)
+        if reset_token.expires_at <= now:
+            raise HTTPException(status_code=400, detail="Некорректный или просроченный токен")
+
+        entity = await self.repo.get_auth_entity_by_id(reset_token.entity_id)
         if not entity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
 
         new_hash = await auth.hash_password(data.new_password)
-        await self.repo.update_password(entity_id, new_hash)
+        await self.repo.update_password(reset_token.entity_id, new_hash)
+        await self.repo.mark_reset_token_used(reset_token.id)
         return PasswordResetResponse(detail="Пароль успешно изменён")
 
-    async def get_entity_by_id(self, entity_id: int) -> AuthEntity | None:
+    async def get_entity_by_id(self, entity_id: UUID) -> AuthEntity | None:
         return await self.repo.get_auth_entity_by_id(entity_id)
 
 

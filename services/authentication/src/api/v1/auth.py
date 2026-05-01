@@ -5,6 +5,7 @@ API v1: эндпоинты аутентификации LoreLounge.
 from fastapi import APIRouter, Response, status, HTTPException, Form
 import logging
 from typing import Annotated
+from uuid import UUID
 
 from api.dependencies import AuthServiceDep, PayloadEntity, RoleRequestServiceDep
 from core.config import settings
@@ -92,7 +93,7 @@ async def login(
 async def get_current_user(payload: PayloadEntity) -> AuthEntityOut:
     """Возвращает данные из payload JWT без обращения к БД."""
     return AuthEntityOut(
-        id=int(payload.sub),
+        id=UUID(payload.sub),
         email=payload.email,
         login=payload.login,
         role=payload.role,
@@ -128,7 +129,7 @@ async def create_role_request(
     payload: PayloadEntity,
 ) -> RoleRequestOut:
     """Создаёт заявку на смену роли для текущего пользователя."""
-    return await service.create_request(entity_id=int(payload.sub), data=data)
+    return await service.create_request(entity_id=UUID(payload.sub), data=data)
 
 
 # ── Сброс пароля ──────────────────────────────────────────────────────────────

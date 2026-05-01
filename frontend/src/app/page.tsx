@@ -24,6 +24,15 @@ export default function Home() {
           </a>
           <a
             className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-black shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900"
+            href="/reset-password"
+          >
+            <div className="font-medium">Сброс пароля</div>
+            <div className="text-sm text-zinc-600 dark:text-zinc-400">
+              POST /api/auth/password-reset-confirm (json)
+            </div>
+          </a>
+          <a
+            className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-black shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900"
             href="/auth/register"
           >
             <div className="font-medium">Регистрация</div>

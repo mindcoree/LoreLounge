@@ -1,5 +1,6 @@
 import logging
 from typing import Sequence, Optional
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
@@ -15,7 +16,7 @@ class RoleRequestRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, entity_id: int, requested_role: DesiredRole) -> RoleRequest:
+    async def create(self, entity_id: UUID, requested_role: DesiredRole) -> RoleRequest:
         role_request = RoleRequest(entity_id=entity_id, requested_role=requested_role)
         self.session.add(role_request)
         await self.session.commit()
@@ -44,7 +45,7 @@ class RoleRequestRepository:
         result = await self.session.execute(stmt)
         return total or 0, result.scalars().all()
 
-    async def update_role(self, entity_id: int, new_role: DesiredRole) -> AuthEntity | None:
+    async def update_role(self, entity_id: UUID, new_role: DesiredRole) -> AuthEntity | None:
         stmt = (
             update(AuthEntity)
             .where(AuthEntity.id == entity_id)

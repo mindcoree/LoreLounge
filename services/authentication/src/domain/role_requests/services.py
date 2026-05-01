@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from domain.common.enums import RoleRequestStatus
@@ -15,7 +16,7 @@ class RoleRequestService:
         self.repo = repo
         self.entity_repo = entity_repo
 
-    async def create_request(self, entity_id: int, data: RoleRequestCreate) -> RoleRequest:
+    async def create_request(self, entity_id: UUID, data: RoleRequestCreate) -> RoleRequest:
         """Создать заявку на роль (только если нет активной pending-заявки)."""
         total, pending = await self.repo.list_requests(status=RoleRequestStatus.PENDING)
         if any(r.entity_id == entity_id for r in pending):

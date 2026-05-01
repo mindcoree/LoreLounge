@@ -1,5 +1,7 @@
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 from domain.common.enums import DesiredRole, RoleRequestStatus
 from typing import Optional
 
@@ -10,7 +12,7 @@ class RoleRequestOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    entity_id: int
+    entity_id: UUID
     requested_role: DesiredRole
     status: RoleRequestStatus
     created_at: Optional[datetime] = None
