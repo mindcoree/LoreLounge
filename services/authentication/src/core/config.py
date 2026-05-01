@@ -43,14 +43,6 @@ class AuthJWT(BaseModel):
     refresh_expire_days: int = 7
 
 
-class CORSConfig(BaseModel):
-    origins: list[str] = [
-        "http://localhost:3000",
-        "http://localhost:80",
-        "http://localhost",
-        "http://frontend:3000",
-        "http://127.0.0.1:3000",
-    ]
 
 
 class Settings(BaseSettings):
@@ -68,7 +60,6 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DatabaseConfig
     auth: AuthJWT = AuthJWT()
-    cors: CORSConfig = CORSConfig()
 
     # URL фронтенда для формирования ссылок (password-reset и т.д.)
     frontend_url: str = "http://localhost:3000"

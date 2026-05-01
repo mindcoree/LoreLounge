@@ -47,7 +47,7 @@
       "endpoint": "/api/auth/me",
       "method": "GET",
       "output_encoding": "json",
-      "input_headers": ["Cookie"],
+      "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
       "extra_config": {
         "auth/validator": {
           "alg": "RS256",
@@ -97,7 +97,7 @@
       "endpoint": "/api/auth/role-request",
       "method": "POST",
       "output_encoding": "json",
-      "input_headers": ["Content-Type", "Cookie"],
+      "input_headers": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"],
       "extra_config": {
         "auth/validator": {
           "alg": "RS256",

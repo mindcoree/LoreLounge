@@ -9,7 +9,6 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from infrastructure.db.session import db_helper
@@ -42,7 +41,7 @@ async def lifespan(app: FastAPI):
     await db_helper.dispose()
     
     logger.info("🐰 Закрываем соединение с RabbitMQ…")
-    await broker.disconnect()
+    await broker.close()
 
 
 # ── Приложение ────────────────────────────────────────────────────────────────
@@ -56,15 +55,6 @@ app = FastAPI(
     docs_url="/api/v1/docs",
     redoc_url="/api/v1/redoc",
     openapi_url="/api/v1/openapi.json",
-)
-
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors.origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
 
 # Роуты
