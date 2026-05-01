@@ -11,7 +11,9 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from typing import Optional
+
 from fastapi import HTTPException, status, Response, Request
+import jwt
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.exc import IntegrityError
 
@@ -46,15 +48,8 @@ class AuthServices:
         self.repo = repository
         self.role_request_repo = role_request_repo
 
-    # ── Регистрация ──────────────────────────────────────────────────────────
-
     async def register_entity(self, auth_in: AuthEntityIn) -> AuthEntity:
-        """
-        Регистрирует нового пользователя.
-
-        Если запрошена роль ≠ READER, создаётся pending-заявка, а сам
-        пользователь получает базовую роль READER.
-        """
+        """Регистрирует нового пользователя."""
         logger.info("Начало регистрации для %s (запрошенная роль: %s)", auth_in.email, auth_in.role)
 
         hashed_password = await auth.hash_password(auth_in.password)
@@ -76,7 +71,6 @@ class AuthServices:
 
         logger.info("Пользователь создан: id=%s", entity.id)
 
-        # Заявка на роль, если запрошена не READER
         desired_role = auth_in.role
         if desired_role and desired_role.value != Role.READER.value and self.role_request_repo:
             await self.role_request_repo.create(
@@ -85,8 +79,6 @@ class AuthServices:
             logger.info("Создана заявка на роль %s для entity_id=%s", desired_role, entity.id)
 
         return entity
-
-    # ── Аутентификация ───────────────────────────────────────────────────────
 
     async def authenticate_entity(self, credentials: AuthCredentials) -> AuthEntity:
         """Проверяет email + пароль и возвращает AuthEntity."""
@@ -104,19 +96,12 @@ class AuthServices:
         logger.info("Успешный вход: id=%s role=%s", entity.id, entity.role)
         return entity
 
-    # ── Refresh ──────────────────────────────────────────────────────────────
-
     async def refresh_authentication(
         self,
         response: Response,
         refresh_token: str,
     ) -> AuthEntity:
-        """
-        Обновляет access-токен по refresh-токену.
-
-        Декодирует refresh-токен → проверяет тип → ищет пользователя →
-        выдаёт новый access-токен в cookie.
-        """
+        """Обновляет access-токен по refresh-токену."""
         try:
             refresh_payload = await auth.decode_jwt(token=refresh_token)
         except InvalidTokenError:
@@ -149,15 +134,10 @@ class AuthServices:
         )
         return entity
 
-    # ── Payload из запроса ───────────────────────────────────────────────────
-
     async def access_token_payload(
         self, request: Request, response: Response
     ) -> AccessTokenPayload:
-        """
-        Извлекает payload. Приоритет — заголовки от KrakenD Gateway.
-        """
-        # 1. Проверяем заголовки от KrakenD (Source of Truth)
+        """Извлекает payload. Приоритет — заголовки от KrakenD Gateway."""
         user_id = request.headers.get("x-user-id")
         user_role = request.headers.get("x-user-role")
         user_email = request.headers.get("x-user-email")
@@ -165,29 +145,20 @@ class AuthServices:
         if user_id and user_role:
             return AccessTokenPayload(
                 sub=str(user_id),
-                login="", # KrakenD не прокидывает логин, нам достаточно ID/Email
+                login="",
                 role=Role(user_role),
                 email=user_email or ""
             )
 
-        # 2. Если заголовков нет — значит запрос пришел не через Gateway
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Требуется аутентификация через Gateway",
         )
 
-    # ── Сброс пароля ─────────────────────────────────────────────────────────
-
     async def password_reset_request(
         self, data: PasswordResetRequest
     ) -> PasswordResetResponse:
-        """
-        Генерирует ссылку для сброса пароля и публикует событие в RabbitMQ.
-        Всегда возвращает одинаковый ответ — не раскрывает, есть ли email в БД.
-        """
-        import hashlib
-        import secrets
-
+        """Генерирует ссылку для сброса пароля."""
         email = str(data.email)
         generic_response = PasswordResetResponse(
             detail="Если email зарегистрирован, инструкция отправлена."
@@ -226,11 +197,10 @@ class AuthServices:
             logger.exception("Ошибка генерации токена сброса пароля для email=%s", email)
             return PasswordResetResponse(detail="Внутренняя ошибка. Попробуйте позже.")
 
-async def password_reset_confirm(self, data: PasswordResetConfirm) -> "PasswordResetResponse":
+    async def password_reset_confirm(self, data: PasswordResetConfirm) -> "PasswordResetResponse":
         if data.new_password != data.repeat_password:
             raise HTTPException(status_code=400, detail="Пароли не совпадают")
 
-        # Сначала ищем токен, потом cleanup (чтобы не удалить только что созданный)
         token_hash = hashlib.sha256(data.token.encode("utf-8")).hexdigest()
         reset_token = await self.repo.get_reset_token_by_hash(token_hash)
 
@@ -241,7 +211,6 @@ async def password_reset_confirm(self, data: PasswordResetConfirm) -> "PasswordR
             raise HTTPException(status_code=400, detail="Токен уже использован")
 
         now = datetime.now(timezone.utc)
-        # Буфер 10 секунд чтобы избежать race condition при проверке
         if reset_token.expires_at < now - timedelta(seconds=10):
             raise HTTPException(status_code=400, detail="Некорректный или просроченный токен")
 
@@ -256,6 +225,3 @@ async def password_reset_confirm(self, data: PasswordResetConfirm) -> "PasswordR
 
     async def get_entity_by_id(self, entity_id: UUID) -> AuthEntity | None:
         return await self.repo.get_auth_entity_by_id(entity_id)
-
-
-
