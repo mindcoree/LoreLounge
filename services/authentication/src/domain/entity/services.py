@@ -185,10 +185,9 @@ class AuthServices:
 
     async def password_reset_request(
         self, data: PasswordResetRequest
-    ) -> tuple["PasswordResetResponse", dict]:
+    ) -> PasswordResetResponse:
         """
-        Генерирует ссылку для сброса пароля.
-
+        Генерирует ссылку для сброса пароля и публикует событие в RabbitMQ.
         Всегда возвращает одинаковый ответ — не раскрывает, есть ли email в БД.
         """
         email = str(data.email)
@@ -200,10 +199,10 @@ class AuthServices:
             entity = await self.repo.get_auth_entity_by_email(email)
         except Exception:
             logger.exception("Ошибка поиска пользователя по email=%s", email)
-            return PasswordResetResponse(detail="Внутренняя ошибка. Попробуйте позже."), {}
+            return PasswordResetResponse(detail="Внутренняя ошибка. Попробуйте позже.")
 
         if not entity:
-            return generic_response, {}
+            return generic_response
 
         try:
             token = await auth.encode_jwt(
@@ -220,14 +219,21 @@ class AuthServices:
                 f"<p><a href='{reset_link}'>{reset_link}</a></p>"
                 f"<p>Ссылка действительна 30 минут.</p>"
             )
-            return generic_response, {
-                "to_email": entity.email,
-                "subject": "Сброс пароля — LoreLounge",
-                "body": body,
-            }
+            
+            from core.broker import broker
+            from domain.entity.schemas import EmailNotificationSchema
+            
+            message = EmailNotificationSchema(
+                to_email=entity.email,
+                subject="Сброс пароля — LoreLounge",
+                body=body,
+            )
+            await broker.publish(message, queue="email_notifications_queue")
+            
+            return generic_response
         except Exception:
             logger.exception("Ошибка генерации токена сброса пароля для email=%s", email)
-            return PasswordResetResponse(detail="Внутренняя ошибка. Попробуйте позже."), {}
+            return PasswordResetResponse(detail="Внутренняя ошибка. Попробуйте позже.")
 
     async def password_reset_confirm(self, data: PasswordResetConfirm) -> "PasswordResetResponse":
         if data.new_password != data.repeat_password:

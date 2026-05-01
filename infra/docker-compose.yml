@@ -18,18 +18,54 @@ networks:
   # Изолированная сеть БД auth-service — только auth-service имеет доступ
   auth_db_net:
     driver: bridge
-    internal: true # 🔒 нет выхода наружу
-  # --- Шаблон для будущих сервисов ---
-  # content_db_net:
-  #   driver: bridge
-  #   internal: true
-  #
-  # user_db_net:
-  #   driver: bridge
-  #   internal: true
+    # internal: true # 🔒 Закомментировано для DataGrip
+    
+  # Сеть для общения микросервисов с брокером сообщений
+  broker_net:
+    driver: bridge
+    internal: true
 
 
 services:
+
+  # ════════════════════════════════════════════════════════════════════
+  #  BROKER (RabbitMQ)
+  # ════════════════════════════════════════════════════════════════════
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: lorelounge_rabbitmq
+    restart: always
+    networks:
+      - broker_net
+    ports:
+      - "15672:15672" # Web UI админки
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ════════════════════════════════════════════════════════════════════
+  #  NOTIFICATION SERVICE
+  # ════════════════════════════════════════════════════════════════════
+  notification:
+    build:
+      context: ../services/notification
+      dockerfile: Dockerfile
+    container_name: lorelounge_notification
+    restart: always
+    networks:
+      - broker_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - ../services/notification/.env
+    environment:
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
 
   # ════════════════════════════════════════════════════════════════════
   #  AUTH SERVICE + его личная БД
@@ -84,10 +120,13 @@ services:
     networks:
       - lorelounge_net # виден для KrakenD
       - auth_db_net # видит ТОЛЬКО свои postgres_auth и redis_auth
+      - broker_net
     depends_on:
       postgres_auth:
         condition: service_healthy
       redis_auth:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     env_file:
       - ../services/authentication/.env # app-уровень: JWT, SMTP, FRONTEND_URL
@@ -98,6 +137,7 @@ services:
       CONFIG__DB__ECHO: "false"
       CONFIG__DB__POOL_SIZE: "20"
       CONFIG__DB__MAX_OVERFLOW: "10"
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
     volumes:
       - ../services/authentication/certs:/app/certs:ro
     healthcheck:

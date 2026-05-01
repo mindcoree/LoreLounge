@@ -111,3 +111,12 @@ class PasswordResetConfirm(BaseModel):
 
 class PasswordResetResponse(BaseModel):
     detail: str
+
+
+# ── RabbitMQ ─────────────────────────────────────────────────────────────────
+
+
+class EmailNotificationSchema(BaseModel):
+    to_email: EmailStr
+    subject: str
+    body: str

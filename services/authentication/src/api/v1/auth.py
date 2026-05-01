@@ -138,19 +138,9 @@ async def create_role_request(
 async def password_reset_request(
     data: PasswordResetRequest,
     service: AuthServiceDep,
-    background_tasks: BackgroundTasks,
 ) -> PasswordResetResponse:
-    """Генерирует ссылку для сброса пароля и отправляет её на email в фоне."""
-    response, email_data = await service.password_reset_request(data)
-    if email_data:
-        from utils.email import send_email  # Lazy import — сервис опционален
-        background_tasks.add_task(
-            send_email,
-            email_data["to_email"],
-            email_data["subject"],
-            email_data["body"],
-        )
-    return response
+    """Генерирует ссылку для сброса пароля и публикует сообщение в RabbitMQ."""
+    return await service.password_reset_request(data)
 
 
 @router.post(

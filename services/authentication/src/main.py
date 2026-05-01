@@ -30,9 +30,19 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Управление жизненным циклом: создаём пул при старте, закрываем при остановке."""
     logger.info("🚀 auth-service запускается…")
+    
+    # Стартуем RabbitMQ broker
+    from core.broker import broker
+    await broker.connect()
+    logger.info("🐰 Соединение с RabbitMQ установлено")
+    
     yield
+    
     logger.info("🛑 auth-service останавливается, закрываем пул соединений…")
     await db_helper.dispose()
+    
+    logger.info("🐰 Закрываем соединение с RabbitMQ…")
+    await broker.disconnect()
 
 
 # ── Приложение ────────────────────────────────────────────────────────────────

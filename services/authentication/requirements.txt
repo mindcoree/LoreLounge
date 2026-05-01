@@ -37,3 +37,6 @@ annotated-types==0.7.0
 typing_extensions==4.15.0
 python-multipart==0.0.20
 
+
+# ─── Message Broker ──────────────────────────────────────────────────────────
+faststream[rabbit]
