@@ -11,9 +11,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from typing import Optional
-
 from fastapi import HTTPException, status, Response, Request
-import jwt
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.exc import IntegrityError
 
@@ -187,6 +185,9 @@ class AuthServices:
         Генерирует ссылку для сброса пароля и публикует событие в RabbitMQ.
         Всегда возвращает одинаковый ответ — не раскрывает, есть ли email в БД.
         """
+        import hashlib
+        import secrets
+
         email = str(data.email)
         generic_response = PasswordResetResponse(
             detail="Если email зарегистрирован, инструкция отправлена."
@@ -204,6 +205,7 @@ class AuthServices:
         try:
             await self.repo.cleanup_reset_tokens(datetime.now(timezone.utc))
             await self.repo.invalidate_reset_tokens(entity.id)
+            
             token = secrets.token_urlsafe(32)
             token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
             expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
@@ -224,19 +226,13 @@ class AuthServices:
             logger.exception("Ошибка генерации токена сброса пароля для email=%s", email)
             return PasswordResetResponse(detail="Внутренняя ошибка. Попробуйте позже.")
 
-    async def password_reset_confirm(self, data: PasswordResetConfirm) -> "PasswordResetResponse":
+async def password_reset_confirm(self, data: PasswordResetConfirm) -> "PasswordResetResponse":
         if data.new_password != data.repeat_password:
             raise HTTPException(status_code=400, detail="Пароли не совпадают")
 
-        await self.repo.cleanup_reset_tokens(datetime.now(timezone.utc))
-
-        # Поддержка двух форматов для удобства разработки/отладки:
-        # - пользователь может прислать сырой токен (как в письме) -> хешируем и ищем
-        # - или прислать уже хеш (например, случайно скопировал из БД) -> ищем напрямую
-        reset_token = await self.repo.get_reset_token_by_hash(data.token)
-        if not reset_token:
-            token_hash = hashlib.sha256(data.token.encode("utf-8")).hexdigest()
-            reset_token = await self.repo.get_reset_token_by_hash(token_hash)
+        # Сначала ищем токен, потом cleanup (чтобы не удалить только что созданный)
+        token_hash = hashlib.sha256(data.token.encode("utf-8")).hexdigest()
+        reset_token = await self.repo.get_reset_token_by_hash(token_hash)
 
         if not reset_token:
             raise HTTPException(status_code=400, detail="Некорректный или просроченный токен")
@@ -245,7 +241,8 @@ class AuthServices:
             raise HTTPException(status_code=400, detail="Токен уже использован")
 
         now = datetime.now(timezone.utc)
-        if reset_token.expires_at <= now:
+        # Буфер 10 секунд чтобы избежать race condition при проверке
+        if reset_token.expires_at < now - timedelta(seconds=10):
             raise HTTPException(status_code=400, detail="Некорректный или просроченный токен")
 
         entity = await self.repo.get_auth_entity_by_id(reset_token.entity_id)

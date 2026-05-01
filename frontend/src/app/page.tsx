@@ -1,69 +1,30 @@
+"use client";
+
+import { useState } from "react";
+import Header from "@/components/Header";
+import AuthModal from "@/components/AuthModal";
+
 export default function Home() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col gap-10 py-20 px-6 bg-white dark:bg-black sm:px-10">
-        <header className="flex flex-col gap-3">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            LoreLounge
-          </h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Мини-фронт для проверки авторизации (cookie, /me, logout) через
-            API Gateway.
-          </p>
-        </header>
+    <>
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[#0d0d0d]">
+        <div className="absolute -left-20 -top-28 h-72 w-72 rounded-full bg-[#ffd28a] opacity-20 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-[#3b82f6] opacity-15 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5" />
+      </div>
 
-        <section className="grid gap-3 sm:grid-cols-2">
-          <a
-            className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-black shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900"
-            href="/auth/login"
-          >
-            <div className="font-medium">Вход</div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              POST /api/auth/login (form) + cookie
-            </div>
-          </a>
-          <a
-            className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-black shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900"
-            href="/reset-password"
-          >
-            <div className="font-medium">Сброс пароля</div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              POST /api/auth/password-reset-confirm (json)
-            </div>
-          </a>
-          <a
-            className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-black shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900"
-            href="/auth/register"
-          >
-            <div className="font-medium">Регистрация</div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              POST /api/auth/register (form)
-            </div>
-          </a>
-          <a
-            className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-black shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900"
-            href="/me"
-          >
-            <div className="font-medium">Профиль (/me)</div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              GET /api/auth/me (cookie)
-            </div>
-          </a>
-          <a
-            className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-black shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900"
-            href="/debug"
-          >
-            <div className="font-medium">Debug API</div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              Ручной вызов эндпоинтов
-            </div>
-          </a>
-        </section>
-
-        <footer className="text-xs text-zinc-500 dark:text-zinc-500">
-          API вызывается через `http://localhost/api/auth/*` (Nginx → KrakenD → auth).
-        </footer>
+      <Header onOpenAuth={() => setIsAuthModalOpen(true)} />
+      
+      <main className="relative min-h-screen text-white">
+        <div className="max-w-[1440px] mx-auto w-full px-4 py-12">
+          <h1 className="text-3xl font-bold">Добро пожаловать в LoreLounge</h1>
+          <p className="mt-2 text-gray-400">Платформа для чтения веб-новелл</p>
+        </div>
       </main>
-    </div>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+    </>
   );
 }
