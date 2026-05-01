@@ -21,7 +21,7 @@ async def handle_password_reset(msg: PasswordResetNotification):
     subject = "Сброс пароля — LoreLounge"
     body = (
         f"<p>Для сброса пароля перейдите по ссылке:</p>"
-        f"<p><a href='{msg.reset_link}'>{msg.reset_link}</a></p>"
+        f"<p><a href='{msg.reset_link}'>Сбросить пароль</a></p>"
         f"<p>Ссылка действительна 30 минут.</p>"
     )
     

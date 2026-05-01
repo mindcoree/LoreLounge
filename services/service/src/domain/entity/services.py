@@ -217,7 +217,7 @@ class AuthServices:
             reset_link = f"{settings.frontend_url}/reset-password?token={token}"
             body = (
                 f"<p>Для сброса пароля перейдите по ссылке:</p>"
-                f"<p><a href='{reset_link}'>{reset_link}</a></p>"
+                f"<p><a href='{reset_link}'>Сбросить пароль</a></p>"
                 f"<p>Ссылка действительна 30 минут.</p>"
             )
             return generic_response, {

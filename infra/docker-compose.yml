@@ -4,7 +4,7 @@
 # ║  Сервисы не имеют прямого доступа к БД друг друга.                           ║
 # ║                                                                              ║
 # ║  Запуск из корня проекта:                                                    ║
-# ║    docker-compose -f infra/docker-compose.yml up --build                    ║
+# ║    docker-compose -f infra/docker-compose.yml up --build                     ║
 # ║  Или просто: make up (если используешь Makefile)                             ║
 # ║                                                                              ║
 # ║  Снаружи доступен ТОЛЬКО Nginx на порту 80.                                  ║
@@ -58,6 +58,7 @@ services:
     container_name: lorelounge_notification
     restart: always
     networks:
+      - lorelounge_net
       - broker_net
     depends_on:
       rabbitmq:
