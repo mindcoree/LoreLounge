@@ -3,8 +3,7 @@ from pydantic import BaseModel, PostgresDsn
 from pathlib import Path
 
 
-BASE_DIR = Path(__file__).parent.parent
-
+BASE_SERVICE_DIR = Path(__file__).parent.parent.parent
 
 class RunConfig(BaseModel):
     port: int = 8000
@@ -27,8 +26,8 @@ class DatabaseConfig(BaseModel):
 
 
 class AuthJWT(BaseModel):
-    private_key: Path = BASE_DIR / "certs" / "private_key.pem"
-    public_key: Path = BASE_DIR / "certs" / "public_key.pem"
+    private_key: Path = BASE_SERVICE_DIR / "certs" / "private_key.pem"
+    public_key: Path = BASE_SERVICE_DIR / "certs" / "public_key.pem"
     algorithm: str = "RS256"
     access_expire_min: int = 15
     refresh_expire_days: int = 2
