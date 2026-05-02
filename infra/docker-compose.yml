@@ -118,8 +118,8 @@ services:
       context: ../services/auth
       dockerfile: Dockerfile
     container_name: auth
-    ports:
-      - "8000:8000" # ❗ Только для отладки напрямую  
+    # ports:
+    #   - "8000:8000" # ❗ Только для отладки напрямую  
     restart: always
     networks:
       - lorelounge_net

@@ -18,6 +18,7 @@ BASE_SERVICE_DIR = Path(__file__).parent.parent.parent
 class RunConfig(BaseModel):
     port: int = 8000
     host: str = "0.0.0.0"
+    show_docs: bool = False 
 
 
 class DatabaseConfig(BaseModel):

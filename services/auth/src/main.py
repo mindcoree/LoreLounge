@@ -52,10 +52,10 @@ app = FastAPI(
     lifespan=lifespan,
     # Указываем root_path /api
     root_path="/api",
-    # Путь к Swagger станет /api/auth/docs
-    docs_url="/auth/docs",
-    # OpenAPI JSON будет по адресу /api/auth/openapi.json
-    openapi_url="/auth/openapi.json",
+    # Путь к Swagger станет /api/auth/docs (если включен)
+    docs_url="/auth/docs" if settings.run.show_docs else None,
+    # OpenAPI JSON (если включен)
+    openapi_url="/auth/openapi.json" if settings.run.show_docs else None,
     # Настройки для "чистоты" Swagger
     swagger_ui_parameters={"defaultModelsExpandDepth": -1} 
 )   
