@@ -5,7 +5,7 @@
 #   make up          — поднять всё
 #   make down        — остановить всё
 #   make certs       — сгенерировать RSA-ключи для JWT
-#   make migrate     — применить миграции auth-service
+#   make migrate     — применить миграции auth
 # =============================================================================
 
 .PHONY: help up down build logs certs migrate migrate-gen ps clean
@@ -16,7 +16,7 @@ YELLOW := \033[0;33m
 NC     := \033[0m
 
 # Путь к compose-файлу (лежит в infra/)
-COMPOSE := docker-compose -f infra/docker-compose.yml
+COMPOSE := docker compose -f infra/docker-compose.yml
 
 help: ## Показать список команд
 	@echo ""
@@ -39,8 +39,8 @@ build: ## Пересобрать образы
 logs: ## Логи всех сервисов (Ctrl+C для выхода)
 	$(COMPOSE) logs -f
 
-logs-auth: ## Логи только auth-service
-	$(COMPOSE) logs -f auth-service
+logs-auth: ## Логи только auth
+	$(COMPOSE) logs -f auth
 
 ps: ## Статус контейнеров
 	$(COMPOSE) ps
@@ -50,15 +50,15 @@ clean: ## Остановить и удалить volumes (ОСТОРОЖНО: д
 
 # ── Подготовка ────────────────────────────────────────────────────────────────
 
-certs: ## Сгенерировать RSA-ключи для JWT (auth-service)
+certs: ## Сгенерировать RSA-ключи для JWT (auth)
 	@bash infra/scripts/generate-certs.sh
 
 # ── Миграции ─────────────────────────────────────────────────────────────────
 
-db-up: ## Запустить только БД auth-service (для локальных миграций)
+db-up: ## Запустить только БД auth (для локальных миграций)
 	$(COMPOSE) up -d postgres_auth
 
-migrate: ## Применить Alembic-миграции (auth-service)
+migrate: ## Применить Alembic-миграции (auth)
 	@bash infra/scripts/migrate.sh upgrade
 
 migrate-gen: ## Сгенерировать новую миграцию: make migrate-gen MSG="add_novels_table"

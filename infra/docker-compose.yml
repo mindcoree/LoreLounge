@@ -1,3 +1,5 @@
+name: lorelounge
+
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║  АРХИТЕКТУРА: DATABASE PER SERVICE                                           ║
 # ║  Каждый микросервис имеет свою изолированную базу данных.                    ║
@@ -15,7 +17,7 @@ networks:
   lorelounge_net:
     driver: bridge
 
-  # Изолированная сеть БД auth-service — только auth-service имеет доступ
+  # Изолированная сеть БД auth — только auth имеет доступ
   auth_db_net:
     driver: bridge
     # internal: true # 🔒 Закомментировано для DataGrip
@@ -33,7 +35,6 @@ services:
   # ════════════════════════════════════════════════════════════════════
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: lorelounge_rabbitmq
     restart: always
     networks:
       - broker_net
@@ -55,7 +56,6 @@ services:
     build:
       context: ../services/notification
       dockerfile: Dockerfile
-    container_name: lorelounge_notification
     restart: always
     networks:
       - lorelounge_net
@@ -72,10 +72,9 @@ services:
   #  AUTH SERVICE + его личная БД
   # ════════════════════════════════════════════════════════════════════
 
-  # PostgreSQL — только для auth-service
+  # PostgreSQL — только для auth
   postgres_auth:
     image: postgres:15-alpine
-    container_name: lorelounge_postgres_auth
     restart: always
     networks:
       - auth_db_net
@@ -95,10 +94,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis — только для auth-service (кэш JWT, blacklist токенов)
+  # Redis — только для auth (кэш JWT, blacklist токенов)
   redis_auth:
     image: redis:7-alpine
-    container_name: lorelounge_redis_auth
     restart: always
     networks:
       - auth_db_net
@@ -112,11 +110,10 @@ services:
       retries: 5
 
   # Auth Service
-  auth-service:
+  auth:
     build:
-      context: ../services/authentication
+      context: ../services/auth
       dockerfile: Dockerfile
-    container_name: lorelounge_auth
     restart: always
     networks:
       - lorelounge_net # виден для KrakenD
@@ -130,7 +127,7 @@ services:
       rabbitmq:
         condition: service_healthy
     env_file:
-      - ../services/authentication/.env # app-уровень: JWT, SMTP, FRONTEND_URL
+      - ../services/auth/.env # app-уровень: JWT, SMTP, FRONTEND_URL
     environment:
       # Переопределяем только то, что зависит от Docker-сети:
       # docker hostname postgres_auth недоступен снаружи контейнера
@@ -140,7 +137,7 @@ services:
       CONFIG__DB__MAX_OVERFLOW: "10"
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
     volumes:
-      - ../services/authentication/certs:/app/certs:ro
+      - ../services/auth/certs:/app/certs:ro
     healthcheck:
       test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')\"" ]
       interval: 15s
@@ -177,15 +174,14 @@ services:
   # KrakenD — API Gateway (видит все сервисы, не видит БД)
   krakend:
     image: devopsfaith/krakend:2.5
-    container_name: lorelounge_krakend
     restart: always
     networks:
       - lorelounge_net
     volumes:
       - ../gateway/krakend.json:/etc/krakend/krakend.json:ro
-      - ../services/authentication/certs/public_key.pem:/etc/krakend/certs/public_key.pem:ro
+      - ../services/auth/certs/public_key.pem:/etc/krakend/certs/public_key.pem:ro
     depends_on:
-      auth-service:
+      auth:
         condition: service_healthy
 
   # Frontend (Next.js) — отдаётся через Nginx
@@ -193,7 +189,6 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    container_name: lorelounge_frontend
     restart: always
     networks:
       - lorelounge_net
@@ -205,7 +200,6 @@ services:
   # Nginx — единственная публичная точка входа
   nginx:
     image: nginx:alpine
-    container_name: lorelounge_nginx
     restart: always
     networks:
       - lorelounge_net
@@ -218,8 +212,8 @@ services:
       - frontend
 
 volumes:
-  postgres_auth_data: # данные auth-service БД
+  postgres_auth_data: # данные БД auth
   redis_auth_data:
-    # кэш auth-service
+    # кэш auth
     # postgres_content_data:
     # postgres_user_data:

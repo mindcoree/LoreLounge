@@ -1,0 +1,68 @@
+"""
+Конфигурация auth через pydantic-settings.
+
+Все параметры читаются из env-переменных с префиксом CONFIG__ и
+разделителем __ для вложенных моделей (например CONFIG__DB__URL).
+"""
+
+from pathlib import Path
+from typing import Optional
+
+from pydantic import BaseModel, PostgresDsn
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+BASE_SERVICE_DIR = Path(__file__).parent.parent.parent
+
+
+class RunConfig(BaseModel):
+    port: int = 8000
+    host: str = "0.0.0.0"
+
+
+class DatabaseConfig(BaseModel):
+    url: PostgresDsn
+    echo: bool = False
+    echo_pool: bool = False
+    pool_size: int = 20
+    max_overflow: int = 10
+    naming_convention: dict[str, str] = {
+        "ix": "ix_%(column_0_label)s",
+        "uq": "uq_%(table_name)s_%(column_0_name)s",
+        "ck": "ck_%(table_name)s_%(constraint_name)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "pk": "pk_%(table_name)s",
+    }
+
+
+class AuthJWT(BaseModel):
+    private_key: Path = BASE_SERVICE_DIR / "certs" / "private_key.pem"
+    public_key: Path = BASE_SERVICE_DIR / "certs" / "public_key.pem"
+    algorithm: str = "RS256"
+    access_expire_min: int = 15
+    refresh_expire_days: int = 7
+
+
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        case_sensitive=False,
+        env_nested_delimiter="__",
+        env_prefix="CONFIG__",
+        # Ищем .env в папке сервиса (services/auth/),
+        # а не в CWD — чтобы работало при запуске alembic из любой папки
+        env_file=str(BASE_SERVICE_DIR / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    run: RunConfig = RunConfig()
+    db: DatabaseConfig
+    auth: AuthJWT = AuthJWT()
+
+    # URL фронтенда для формирования ссылок (password-reset и т.д.)
+    frontend_url: str = "http://localhost:3000"
+
+
+settings = Settings()

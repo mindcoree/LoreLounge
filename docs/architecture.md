@@ -12,7 +12,7 @@ flowchart TB
     end
 
     subgraph Micro["Слой 2: Микросервисы"]
-        Auth["auth-service<br/>FastAPI<br/>:8000"]
+        Auth["auth<br/>FastAPI<br/>:8000"]
         Notif["notification-service<br/>FastStream<br/>:8001"]
     end
 
@@ -53,7 +53,7 @@ flowchart TB
         Nginx["Nginx"]
         KrakenD["KrakenD"]
         NextJS["Next.js"]
-        Auth["auth-service"]
+        Auth["auth"]
         Notif["notification-service"]
     end
 
@@ -83,7 +83,7 @@ sequenceDiagram
     participant B as Браузер
     participant N as Nginx :80
     participant K as KrakenD :8080
-    participant A as auth-service :8000
+    participant A as auth :8000
     participant PG as postgres_auth
 
     B->>N: GET /api/auth/me<br/>Cookie: access_token=JWT
@@ -113,7 +113,7 @@ sequenceDiagram
     participant B as Браузер
     participant N as Nginx
     participant K as KrakenD
-    participant A as auth-service
+    participant A as auth
     participant PG as postgres_auth
     participant RMQ as RabbitMQ
     participant Notif as notification-service
@@ -150,7 +150,7 @@ flowchart LR
             Nginx["nginx"]
             KrakenD["krakend"]
             NextJS["frontend"]
-            Auth["auth-service"]
+            Auth["auth"]
             Notif["notification"]
             PG["postgres_auth"]
             Redis["redis_auth"]

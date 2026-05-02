@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# generate-certs.sh — Генерация RSA-256 ключевой пары для JWT (auth-service)
+# generate-certs.sh — Генерация RSA-256 ключевой пары для JWT (auth)
 # =============================================================================
 # Использование:
 #   bash infra/scripts/generate-certs.sh
@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-CERTS_DIR="services/authentication/certs"
+CERTS_DIR="services/auth/certs"
 
 echo "🔑 Генерация RSA-2048 ключевой пары..."
 

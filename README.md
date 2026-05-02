@@ -25,7 +25,7 @@ LoreLounge (от слов Lore — история, знания вселенно
 │  Nginx (:80) → KrakenD (:8080) → Next.js (:3000)            │
 ├─────────────────────────────────────────────────────────────┤
 │  Слой 2: Микросервисы                                    │
-│  auth-service (:8000), notification-service (:8001)          │
+│  auth (:8000), notification-service (:8001)                  │
 ├─────────────────────────────────────────────────────────────┤
 │  Слой 3: Event-Driven                                    │
 │  RabbitMQ (async messaging)                              │
@@ -38,8 +38,8 @@ LoreLounge (от слов Lore — история, знания вселенно
 ### Сетевая изоляция
 
 - **lorelounge_net**: Nginx, KrakenD, Next.js, сервисы
-- **auth_db_net**: auth-service ↔ postgres_auth, redis_auth
-- **broker_net** (internal): auth-service ↔ notification ↔ RabbitMQ
+- **auth_db_net**: auth ↔ postgres_auth, redis_auth
+- **broker_net** (internal): auth ↔ notification ↔ RabbitMQ
 
 ## Структура проекта
 
@@ -49,7 +49,7 @@ loreLounge/
 ├── gateway/              # Nginx, KrakenD конфиги
 ├── frontend/            # Next.js приложение
 ├── services/
-│   ├── authentication/  # auth-service (FastAPI)
+│   ├── auth/            # auth (FastAPI)
 │   └── notification/    # notification-service (FastStream)
 ├── infra/               # Docker Compose, скрипты
 └── Makefile
@@ -113,7 +113,7 @@ make down
 | LORELOUNGE_API_BASE | URL API Gateway | http://krakend:8080/api |
 | PORT | Порт Next.js | 3000 |
 
-### auth-service
+### auth
 
 | Переменная | Описание |
 |------------|----------|
@@ -128,8 +128,8 @@ make down
 # Запуск только фронтенда в режиме разработки
 cd frontend && npm run dev
 
-# Запуск auth-service
-cd services/authentication && uvicorn src.main:app --reload
+# Запуск auth
+cd services/auth && uvicorn src.main:app --reload
 ```
 
 ## Лицензия

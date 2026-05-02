@@ -15,7 +15,7 @@
         {
           "url_pattern": "/api/v1/register",
           "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -27,7 +27,7 @@
         {
           "url_pattern": "/api/v1/login",
           "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -39,7 +39,7 @@
         {
           "url_pattern": "/api/v1/logout",
           "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -51,7 +51,7 @@
       "extra_config": {
         "auth/validator": {
           "alg": "RS256",
-          "jwk_url": "http://auth-service:8000/api/v1/.well-known/jwks.json",
+          "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
           "disable_jwk_security": true,
           "cookie_name": "access_token",
           "propagate_claims": [
@@ -65,7 +65,7 @@
         {
           "url_pattern": "/api/v1/me",
           "encoding": "json",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -77,7 +77,7 @@
         {
           "url_pattern": "/api/v1/password-reset-request",
           "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -89,7 +89,7 @@
         {
           "url_pattern": "/api/v1/password-reset-confirm",
           "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -101,7 +101,7 @@
       "extra_config": {
         "auth/validator": {
           "alg": "RS256",
-          "jwk_url": "http://auth-service:8000/api/v1/.well-known/jwks.json",
+          "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
           "disable_jwk_security": true,
           "cookie_name": "access_token",
           "propagate_claims": [
@@ -115,119 +115,7 @@
         {
           "url_pattern": "/api/v1/role-request",
           "encoding": "json",
-          "host": ["http://auth-service:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/register",
-      "method": "POST",
-      "output_encoding": "no-op",
-      "backend": [
-        {
-          "url_pattern": "/api/v1/register",
-          "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/login",
-      "method": "POST",
-      "output_encoding": "no-op",
-      "backend": [
-        {
-          "url_pattern": "/api/v1/login",
-          "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/logout",
-      "method": "POST",
-      "output_encoding": "no-op",
-      "backend": [
-        {
-          "url_pattern": "/api/v1/logout",
-          "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/me",
-      "method": "GET",
-      "output_encoding": "json",
-      "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
-      "extra_config": {
-        "auth/validator": {
-          "alg": "RS256",
-          "jwk_url": "http://auth-service:8000/api/v1/.well-known/jwks.json",
-          "disable_jwk_security": true,
-          "cookie_name": "access_token",
-          "propagate_claims": [
-            ["sub", "x-user-id"],
-            ["role", "x-user-role"],
-            ["email", "x-user-email"]
-          ]
-        }
-      },
-      "backend": [
-        {
-          "url_pattern": "/api/v1/me",
-          "encoding": "json",
-          "host": ["http://auth-service:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/password-reset-request",
-      "method": "POST",
-      "output_encoding": "no-op",
-      "backend": [
-        {
-          "url_pattern": "/api/v1/password-reset-request",
-          "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/password-reset-confirm",
-      "method": "POST",
-      "output_encoding": "no-op",
-      "backend": [
-        {
-          "url_pattern": "/api/v1/password-reset-confirm",
-          "encoding": "no-op",
-          "host": ["http://auth-service:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/role-request",
-      "method": "POST",
-      "output_encoding": "json",
-      "input_headers": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"],
-      "extra_config": {
-        "auth/validator": {
-          "alg": "RS256",
-          "jwk_url": "http://auth-service:8000/api/v1/.well-known/jwks.json",
-          "disable_jwk_security": true,
-          "cookie_name": "access_token",
-          "propagate_claims": [
-            ["sub", "x-user-id"],
-            ["role", "x-user-role"],
-            ["email", "x-user-email"]
-          ]
-        }
-      },
-      "backend": [
-        {
-          "url_pattern": "/api/v1/role-request",
-          "encoding": "json",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -239,7 +127,7 @@
       "extra_config": {
         "auth/validator": {
           "alg": "RS256",
-          "jwk_url": "http://auth-service:8000/api/v1/.well-known/jwks.json",
+          "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
           "disable_jwk_security": true,
           "cookie_name": "access_token",
           "propagate_claims": [
@@ -253,7 +141,7 @@
         {
           "url_pattern": "/api/v1/role-requests/",
           "encoding": "json",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -265,7 +153,7 @@
       "extra_config": {
         "auth/validator": {
           "alg": "RS256",
-          "jwk_url": "http://auth-service:8000/api/v1/.well-known/jwks.json",
+          "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
           "disable_jwk_security": true,
           "cookie_name": "access_token",
           "propagate_claims": [
@@ -279,7 +167,7 @@
         {
           "url_pattern": "/api/v1/role-requests/{request_id}/approve",
           "encoding": "json",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     },
@@ -291,7 +179,7 @@
       "extra_config": {
         "auth/validator": {
           "alg": "RS256",
-          "jwk_url": "http://auth-service:8000/api/v1/.well-known/jwks.json",
+          "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
           "disable_jwk_security": true,
           "cookie_name": "access_token",
           "propagate_claims": [
@@ -305,7 +193,7 @@
         {
           "url_pattern": "/api/v1/role-requests/{request_id}/reject",
           "encoding": "json",
-          "host": ["http://auth-service:8000"]
+          "host": ["http://auth:8000"]
         }
       ]
     }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# migrate.sh — Применение Alembic-миграций для auth-service
+# migrate.sh — Применение Alembic-миграций для auth
 # =============================================================================
 # Использование:
 #   bash infra/scripts/migrate.sh               # применить все миграции
@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-SERVICE_DIR="services/authentication"
+SERVICE_DIR="services/auth"
 ACTION="${1:-upgrade}"
 
 # Берём параметры из .env (если есть)
