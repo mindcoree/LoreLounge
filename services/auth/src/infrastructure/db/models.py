@@ -28,7 +28,6 @@ class AuthEntity(Base, TimestampMix):
         server_default=text("uuid_generate_v4()"),
     )
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    login: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
     hash_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[Role] = mapped_column(
         SAEnum(Role, name="role_enum"),

@@ -95,7 +95,6 @@ async def get_current_user(payload: PayloadEntity) -> AuthEntityOut:
     return AuthEntityOut(
         id=UUID(payload.sub),
         email=payload.email,
-        login=payload.login,
         role=payload.role,
     )
 

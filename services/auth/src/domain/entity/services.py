@@ -65,7 +65,6 @@ class AuthServices:
         hashed_password = await auth.hash_password(auth_in.password)
         entity_data = {
             "email": auth_in.email,
-            "login": auth_in.login,
             "hash_password": hashed_password,
             "role": Role.READER,
         }
@@ -117,7 +116,6 @@ class AuthServices:
 
         auth_payload = AuthEntitySchema(
             id=entity.id,
-            login=entity.login,
             role=entity.role,
             email=entity.email,
         )
@@ -133,7 +131,6 @@ class AuthServices:
         if user_id and user_role:
             return AccessTokenPayload(
                 sub=str(user_id),
-                login="",
                 role=Role(user_role),
                 email=user_email or ""
             )

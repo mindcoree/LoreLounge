@@ -19,9 +19,6 @@ class AbstractAuthRepository(ABC):
     async def get_auth_entity_by_email(self, email: str) -> Optional[DomainAuthEntity]:
         pass
 
-    @abstractmethod
-    async def get_auth_entity_for_verify(self, login: str) -> Optional[DomainAuthEntity]:
-        pass
 
     @abstractmethod
     async def update_password(self, entity_id: UUID, new_hash_password: str) -> Optional[DomainAuthEntity]:

@@ -23,7 +23,6 @@ def _to_domain_entity(entity: AuthEntity | None) -> DomainAuthEntity | None:
         return None
     return DomainAuthEntity(
         id=entity.id,
-        login=entity.login,
         email=entity.email,
         role=entity.role,
         hash_password=entity.hash_password
@@ -55,7 +54,7 @@ class AuthSQLAlchemyRepository(AbstractAuthRepository):
             await self.session.commit()
         except IntegrityError:
             await self.session.rollback()
-            raise UserAlreadyExistsError("Пользователь с таким email или логином уже существует")
+            raise UserAlreadyExistsError("Пользователь с таким email уже существует")
             
         await self.session.refresh(auth_entity)
         return _to_domain_entity(auth_entity)
@@ -69,10 +68,6 @@ class AuthSQLAlchemyRepository(AbstractAuthRepository):
         result = await self.session.execute(stmt)
         return _to_domain_entity(result.scalar_one_or_none())
 
-    async def get_auth_entity_for_verify(self, login: str) -> DomainAuthEntity | None:
-        stmt = select(AuthEntity).where(AuthEntity.login == login)
-        result = await self.session.execute(stmt)
-        return _to_domain_entity(result.scalar_one_or_none())
 
     async def update_password(self, entity_id: UUID, new_hash_password: str) -> DomainAuthEntity | None:
         stmt = (

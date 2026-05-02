@@ -160,7 +160,6 @@ def create_payload(auth_payload: AuthEntitySchema) -> dict:
     """Формирует стандартный payload для access-токена."""
     return {
         "sub": str(auth_payload.id),
-        "login": auth_payload.login,
         "email": auth_payload.email,
         "role": auth_payload.role,
     }

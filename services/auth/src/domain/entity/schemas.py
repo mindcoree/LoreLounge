@@ -19,7 +19,6 @@ class AuthEntitySchema(BaseModel):
     """Минимальный набор данных для создания JWT-токенов."""
 
     id: UUID
-    login: str
     role: Role
     email: EmailStr
 
@@ -31,7 +30,6 @@ class AuthEntityIn(BaseModel):
     """Данные для регистрации новой сущности."""
 
     email: EmailStr
-    login: str = Field(min_length=3, max_length=80, description="Логин пользователя")
     password: str = Field(min_length=8, max_length=128)
     role: DesiredRole = DesiredRole.READER
 
@@ -42,7 +40,6 @@ class AuthEntityOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    login: str
     email: EmailStr
     role: Role
 
@@ -68,7 +65,6 @@ class AccessTokenPayload(BaseModel):
     """Payload access-токена, извлекаемый из JWT."""
 
     sub: str
-    login: Optional[str] = ""
     role: Role
     email: EmailStr
 
@@ -102,7 +98,6 @@ class PasswordResetNotification(BaseModel):
 
 class DomainAuthEntity(BaseModel):
     id: UUID
-    login: str
     email: str
     role: Role
     hash_password: str
