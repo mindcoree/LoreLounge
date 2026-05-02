@@ -12,8 +12,7 @@ from fastapi import FastAPI
 
 from core.config import settings
 from infrastructure.db.session import db_helper
-from api.v1.auth import router as auth_router
-from api.v1.roles import router as roles_router
+from api.v1 import router_v1
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,11 +57,7 @@ app = FastAPI(
 )
 
 # Роуты
-app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
-app.include_router(roles_router, prefix="/api/v1/role-requests", tags=["role-requests"])
-
-
-# ── Health-check ──────────────────────────────────────────────────────────────
+app.include_router(router_v1, prefix="/api/v1", tags=["v1"])
 
 
 @app.get("/healthz", tags=["infra"], summary="Проверка работоспособности сервиса")
