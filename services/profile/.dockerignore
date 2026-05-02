@@ -9,4 +9,3 @@ __pycache__
 .DS_Store
 *.log
 migrations/versions/__pycache__
-certs/private_key.pem

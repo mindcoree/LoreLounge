@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Исходный код
 COPY src/      ./src/
-COPY alembic/  ./alembic/
+COPY migrations/  ./migrations/
 COPY alembic.ini .
 
 # Папка для сертификатов (реальные ключи прокидываются через volume)
