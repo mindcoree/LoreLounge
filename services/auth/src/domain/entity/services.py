@@ -26,6 +26,7 @@ from domain.entity.schemas import (
     AccessTokenPayload,
     AuthEntityIn,
     AuthCredentials,
+    AuthEntitySchema,
     PasswordResetRequest,
     PasswordResetConfirm,
     PasswordResetResponse,
@@ -124,7 +125,13 @@ class AuthServices:
                 detail="Пользователь не найден",
             )
 
-        access_token = await auth.create_access_token(auth_info=entity)
+        auth_payload = AuthEntitySchema(
+            id=entity.id,
+            login=entity.login,
+            role=entity.role,
+            email=entity.email,
+        )
+        access_token = await auth.create_access_token(auth_info=auth_payload)
         await auth.set_token_cookie(
             response=response,
             key=ACCESS_TOKEN_COOKIE_KEY,
@@ -133,9 +140,7 @@ class AuthServices:
         )
         return entity
 
-    async def access_token_payload(
-        self, request: Request, response: Response
-    ) -> AccessTokenPayload:
+    async def access_token_payload(self, request: Request) -> AccessTokenPayload:
         """Извлекает payload. Приоритет — заголовки от KrakenD Gateway."""
         user_id = request.headers.get("x-user-id")
         user_role = request.headers.get("x-user-role")

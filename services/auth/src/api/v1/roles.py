@@ -1,11 +1,12 @@
 """
-API v1: эндпоинты управления заявками на роль (только MODERATOR / ADMIN).
+API v1: эндпоинты управления заявками на роль (только ADMIN).
 """
 
 from typing import Optional
-from fastapi import APIRouter, status, Query
 
-from api.dependencies import PayloadEntity, RoleRequestServiceDep
+from fastapi import APIRouter, Query
+
+from api.dependencies import AdminGuard, RoleRequestServiceDep
 from domain.common.enums import RoleRequestStatus
 from domain.role_requests.schemas import RoleRequestOut, RoleRequestListOut
 
@@ -18,17 +19,20 @@ router = APIRouter()
     summary="Список заявок на смену роли",
 )
 async def list_role_requests(
-    payload: PayloadEntity,
+    _admin: AdminGuard,
     service: RoleRequestServiceDep,
     status_filter: Optional[RoleRequestStatus] = Query(None, alias="status"),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
 ) -> RoleRequestListOut:
-    """Возвращает список заявок (с пагинацией и фильтрацией по статусу)."""
+    """Возвращает список заявок (только для администратора)."""
     total, items = await service.list_requests(
         status_=status_filter, offset=offset, limit=limit
     )
-    return RoleRequestListOut(total=total, items=list(items))
+    return RoleRequestListOut(
+        total=total,
+        items=[RoleRequestOut.model_validate(item) for item in items],
+    )
 
 
 @router.post(
@@ -38,11 +42,12 @@ async def list_role_requests(
 )
 async def approve_role_request(
     request_id: int,
-    payload: PayloadEntity,
+    _admin: AdminGuard,
     service: RoleRequestServiceDep,
 ) -> RoleRequestOut:
     """Одобряет заявку: меняет роль пользователя и статус заявки → APPROVED."""
-    return await service.approve_request(request_id)
+    request = await service.approve_request(request_id)
+    return RoleRequestOut.model_validate(request)
 
 
 @router.post(
@@ -52,8 +57,9 @@ async def approve_role_request(
 )
 async def reject_role_request(
     request_id: int,
-    payload: PayloadEntity,
+    _admin: AdminGuard,
     service: RoleRequestServiceDep,
 ) -> RoleRequestOut:
     """Отклоняет заявку: статус → REJECTED."""
-    return await service.reject_request(request_id)
+    request = await service.reject_request(request_id)
+    return RoleRequestOut.model_validate(request)
