@@ -1,0 +1,4 @@
+{
+  "standard": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
+  "with-content-type": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"]
+}

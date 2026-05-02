@@ -4,7 +4,6 @@
   "name": "LoreLounge API Gateway",
   "port": 8080,
   "timeout": "5000ms",
-  "cache_ttl": "300s",
   "output_encoding": "json",
   "endpoints": [
     {
@@ -14,7 +13,6 @@
       "backend": [
         {
           "url_pattern": "/api/v1/register",
-          "encoding": "no-op",
           "host": ["http://auth:8000"]
         }
       ]
@@ -26,7 +24,6 @@
       "backend": [
         {
           "url_pattern": "/api/v1/login",
-          "encoding": "no-op",
           "host": ["http://auth:8000"]
         }
       ]
@@ -38,7 +35,28 @@
       "backend": [
         {
           "url_pattern": "/api/v1/logout",
-          "encoding": "no-op",
+          "host": ["http://auth:8000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/password-reset-request",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/password-reset-request",
+          "host": ["http://auth:8000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/auth/password-reset-confirm",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/password-reset-confirm",
           "host": ["http://auth:8000"]
         }
       ]
@@ -46,7 +64,6 @@
     {
       "endpoint": "/api/auth/me",
       "method": "GET",
-      "output_encoding": "json",
       "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
       "extra_config": {
         "auth/validator": {
@@ -64,31 +81,6 @@
       "backend": [
         {
           "url_pattern": "/api/v1/me",
-          "encoding": "json",
-          "host": ["http://auth:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/auth/password-reset-request",
-      "method": "POST",
-      "output_encoding": "no-op",
-      "backend": [
-        {
-          "url_pattern": "/api/v1/password-reset-request",
-          "encoding": "no-op",
-          "host": ["http://auth:8000"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/auth/password-reset-confirm",
-      "method": "POST",
-      "output_encoding": "no-op",
-      "backend": [
-        {
-          "url_pattern": "/api/v1/password-reset-confirm",
-          "encoding": "no-op",
           "host": ["http://auth:8000"]
         }
       ]
@@ -96,7 +88,6 @@
     {
       "endpoint": "/api/auth/role-request",
       "method": "POST",
-      "output_encoding": "json",
       "input_headers": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"],
       "extra_config": {
         "auth/validator": {
@@ -114,7 +105,6 @@
       "backend": [
         {
           "url_pattern": "/api/v1/role-request",
-          "encoding": "json",
           "host": ["http://auth:8000"]
         }
       ]
@@ -122,7 +112,6 @@
     {
       "endpoint": "/api/v1/role-requests/",
       "method": "GET",
-      "output_encoding": "json",
       "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
       "extra_config": {
         "auth/validator": {
@@ -140,7 +129,6 @@
       "backend": [
         {
           "url_pattern": "/api/v1/role-requests/",
-          "encoding": "json",
           "host": ["http://auth:8000"]
         }
       ]
@@ -148,7 +136,6 @@
     {
       "endpoint": "/api/v1/role-requests/{request_id}/approve",
       "method": "POST",
-      "output_encoding": "json",
       "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
       "extra_config": {
         "auth/validator": {
@@ -166,7 +153,6 @@
       "backend": [
         {
           "url_pattern": "/api/v1/role-requests/{request_id}/approve",
-          "encoding": "json",
           "host": ["http://auth:8000"]
         }
       ]
@@ -174,7 +160,6 @@
     {
       "endpoint": "/api/v1/role-requests/{request_id}/reject",
       "method": "POST",
-      "output_encoding": "json",
       "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
       "extra_config": {
         "auth/validator": {
@@ -192,7 +177,6 @@
       "backend": [
         {
           "url_pattern": "/api/v1/role-requests/{request_id}/reject",
-          "encoding": "json",
           "host": ["http://auth:8000"]
         }
       ]

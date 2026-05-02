@@ -1,0 +1,72 @@
+[
+  {
+    "endpoint": "/api/auth/me",
+    "method": "GET",
+    "input_headers": "./partials/common-headers.json::standard",
+    "extra_config": {
+      "auth/validator": "./partials/jwt-validator.json"
+    },
+    "backend": [
+      {
+        "url_pattern": "/api/v1/me",
+        "host": ["http://auth:8000"]
+      }
+    ]
+  },
+  {
+    "endpoint": "/api/auth/role-request",
+    "method": "POST",
+    "input_headers": "./partials/common-headers.json::with-content-type",
+    "extra_config": {
+      "auth/validator": "./partials/jwt-validator.json"
+    },
+    "backend": [
+      {
+        "url_pattern": "/api/v1/role-request",
+        "host": ["http://auth:8000"]
+      }
+    ]
+  },
+  {
+    "endpoint": "/api/v1/role-requests/",
+    "method": "GET",
+    "input_headers": "./partials/common-headers.json::standard",
+    "extra_config": {
+      "auth/validator": "./partials/jwt-validator.json"
+    },
+    "backend": [
+      {
+        "url_pattern": "/api/v1/role-requests/",
+        "host": ["http://auth:8000"]
+      }
+    ]
+  },
+  {
+    "endpoint": "/api/v1/role-requests/{request_id}/approve",
+    "method": "POST",
+    "input_headers": "./partials/common-headers.json::standard",
+    "extra_config": {
+      "auth/validator": "./partials/jwt-validator.json"
+    },
+    "backend": [
+      {
+        "url_pattern": "/api/v1/role-requests/{request_id}/approve",
+        "host": ["http://auth:8000"]
+      }
+    ]
+  },
+  {
+    "endpoint": "/api/v1/role-requests/{request_id}/reject",
+    "method": "POST",
+    "input_headers": "./partials/common-headers.json::standard",
+    "extra_config": {
+      "auth/validator": "./partials/jwt-validator.json"
+    },
+    "backend": [
+      {
+        "url_pattern": "/api/v1/role-requests/{request_id}/reject",
+        "host": ["http://auth:8000"]
+      }
+    ]
+  }
+]

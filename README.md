@@ -1,23 +1,23 @@
 # LoreLounge
 
-LoreLounge (от слов Lore — история, знания вселенной, и Lounge — зона отдыха) — это современная платформа для чтения и каталогизации веб-новелл. Место, где удобный интерфейс встречается с умными технологиями: собирайте собственные библиотеки, обсуждайте сюжетные повороты и читайте эксклюзивные переводы, созданные с помощью нейросетей.
+LoreLounge (от слов Lore — история, знания вселенной, и Lounge — зона отдыха) — платформа для чтения и каталогизации веб-новелл с умными технологиями.
 
 ## Технологический стек
 
 | Уровень | Технология |
 |---------|-------------|
 | Frontend | Next.js 15, React 19, Tailwind CSS 4 |
-| API Gateway | KrakenD |
+| API Gateway | KrakenD (Flexible Configuration) |
 | Reverse Proxy | Nginx |
 | Auth Service | FastAPI (Python 3.11+) |
-| Notification | FastStream |
+| Notification Service | FastStream |
 | Database | PostgreSQL 15, Redis 7 |
 | Message Queue | RabbitMQ |
 | Container | Docker, Docker Compose |
 
 ## Архитектура
 
-Система построена на 4 независимых слоях:
+Система построена на 4 независимых слоя:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -25,13 +25,13 @@ LoreLounge (от слов Lore — история, знания вселенно
 │  Nginx (:80) → KrakenD (:8080) → Next.js (:3000)            │
 ├─────────────────────────────────────────────────────────────┤
 │  Слой 2: Микросервисы                                    │
-│  auth (:8000), notification-service (:8001)                  │
+│  auth (:8000), notification (:8001)                       │
 ├─────────────────────────────────────────────────────────────┤
 │  Слой 3: Event-Driven                                    │
-│  RabbitMQ (async messaging)                              │
+│  RabbitMQ                                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Слой 4: Хранение                                        │
-│  postgres_auth, redis_auth                               │
+│  postgres_auth, redis_auth                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -46,11 +46,17 @@ LoreLounge (от слов Lore — история, знания вселенно
 ```
 loreLounge/
 ├── docs/                  # Документация
-├── gateway/              # Nginx, KrakenD конфиги
+├── gateway/              # Nginx, KrakenD конфиг
+│   ├── nginx.conf
+│   ├── krakend.json
+│   └── krakend/          # Flexible Configuration
+│       ├── partials/     # Переиспользуемые блоки
+│       ├── endpoints/    # Эндпоинты
+│       └── templates/   # Шаблоны
 ├── frontend/            # Next.js приложение
 ├── services/
-│   ├── auth/            # auth (FastAPI)
-│   └── notification/    # notification-service (FastStream)
+│   ├── auth/            # Auth Service (FastAPI)
+│   └── notification/    # Notification Service (FastStream)
 ├── infra/               # Docker Compose, скрипты
 └── Makefile
 ```
@@ -84,22 +90,23 @@ make down
 
 ## API Endpoints
 
-### Аутентификация
+### Auth Service (`/api/v1/`)
 
 | Метод | Путь | Описание |
 |-------|------|----------|
-| POST | /api/auth/register | Регистрация |
-| POST | /api/auth/login | Вход |
-| POST | /api/auth/logout | Выход |
-| GET | /api/auth/me | Текущий пользователь |
-| POST | /api/auth/password-reset-request | Запрос сброса пароля |
-| POST | /api/auth/password-reset-confirm | Подтверждение сброса |
+| POST | /api/v1/register | Регистрация пользователя |
+| POST | /api/v1/login | Вход (устанавливает http-only cookies) |
+| POST | /api/v1/logout | Выход (удаляет cookies) |
+| GET | /api/v1/me | Текущий пользователь (из JWT payload) |
+| POST | /api/v1/role-request | Запрос на смену роли |
+| POST | /api/v1/password-reset-request | Запрос сброса пароля |
+| POST | /api/v1/password-reset-confirm | Подтверждение сброса пароля |
+| GET | /api/v1/.well-known/jwks.json | JWKS для KrakenD |
 
-### Роли
+### Role Requests (`/api/v1/role-requests/`)
 
 | Метод | Путь | Описание |
 |-------|------|----------|
-| POST | /api/auth/role-request | Запрос на роль |
 | GET | /api/v1/role-requests/ | Список заявок (admin) |
 | POST | /api/v1/role-requests/{id}/approve | Одобрить заявку |
 | POST | /api/v1/role-requests/{id}/reject | Отклонить заявку |
@@ -115,21 +122,52 @@ make down
 
 ### auth
 
-| Переменная | Описание |
-|------------|----------|
-| CONFIG__DB__URL | PostgreSQL URL |
-| JWT_SECRET_PATH | Путь к приватному ключу |
-| SMTP_HOST | SMTP сервер |
-| RABBITMQ_URL | RabbitMQ URL |
+| Переменная | Описание | По умолчанию |
+|------------|----------|--------------|
+| CONFIG__DB__URL | PostgreSQL URL | postgresql+asyncpg://... |
+| CONFIG__DB__POOL_SIZE | Размер пула соединений | 20 |
+| CONFIG__DB__MAX_OVERFLOW | Максимальное переполнение | 10 |
+| JWT_SECRET_PATH | Путь к приватному ключу | /app/certs/private_key.pem |
+| SMTP_HOST | SMTP сервер | - |
+| RABBITMQ_URL | RabbitMQ URL | amqp://guest:guest@rabbitmq:5672/ |
+
+## KrakenD Configuration
+
+Конфиг использует [Flexible Configuration](https://www.krakend.io/docs/flexible-configuration/) для разделения на части:
+
+```
+gateway/krakend/
+├── krakend.json          # Корень с $import
+├── partials/             # Переиспользуемые блоки
+│   ├── jwt-validator.json
+│   └── common-headers.json
+├── endpoints/            # Эндпоинты
+│   ├── auth-public.json
+│   └── auth-protected.json
+└── templates/           # Шаблоны
+    └── backend.json
+```
+
+**Проверка конфига:**
+```bash
+krakend check -c gateway/krakend.json
+krakend audit -c gateway/krakend.json
+```
 
 ## Разработка
 
 ```bash
-# Запуск только фронтенда в режиме разработки
+# Собрать и запустить все сервисы
+make up
+
+# Запуск только фронтенда
 cd frontend && npm run dev
 
 # Запуск auth
-cd services/auth && uvicorn src.main:app --reload
+cd services/auth && uvicorn src.main:app --reload --port 8000
+
+# Запуск notification
+cd services/notification && python -m src.main
 ```
 
 ## Лицензия
