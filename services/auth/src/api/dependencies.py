@@ -4,7 +4,7 @@ FastAPI dependencies для auth.
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request, Response, status
+from fastapi import Depends, HTTPException, Request, status
 
 from domain.common.enums import Role
 from domain.entity.repository import AuthRepository
@@ -33,10 +33,9 @@ AuthServiceDep = Annotated[AuthServices, Depends(get_auth_service)]
 
 async def get_payload(
     request: Request,
-    response: Response,
     service: AuthServiceDep,
 ) -> AccessTokenPayload:
-    return await service.access_token_payload(request, response)
+    return await service.access_token_payload(request)
 
 
 PayloadEntity = Annotated[AccessTokenPayload, Depends(get_payload)]
@@ -45,20 +44,16 @@ PayloadEntity = Annotated[AccessTokenPayload, Depends(get_payload)]
 # ── RBAC helper ───────────────────────────────────────────────────────────────
 
 
-async def restrict_to_entity(
-    payload: PayloadEntity,
-    role_entity: Role,
-) -> AccessTokenPayload:
-    """Разрешить только нужную роль (или ADMIN)."""
+async def require_admin(payload: PayloadEntity) -> AccessTokenPayload:
+    """Разрешить доступ только администратору."""
     if payload.role == Role.ADMIN:
         return payload
-    if payload.role != role_entity:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Доступ запрещён: требуется роль '{role_entity.value}'",
-        )
-    return payload
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Доступ запрещён: требуется роль 'admin'",
+    )
 
+AdminGuard = Annotated[AccessTokenPayload, Depends(require_admin)]
 
 # ── RoleRequestService ────────────────────────────────────────────────────────
 
