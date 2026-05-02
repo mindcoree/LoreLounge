@@ -1,10 +1,19 @@
-[
-  {
+{
     "endpoint": "/api/auth/me",
     "method": "GET",
-    "input_headers": "./partials/common-headers.json::standard",
+    "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
-      "auth/validator": "./partials/jwt-validator.json"
+      "auth/validator": {
+        "alg": "RS256",
+        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "disable_jwk_security": true,
+        "cookie_name": "access_token",
+        "propagate_claims": [
+          ["sub", "x-user-id"],
+          ["role", "x-user-role"],
+          ["email", "x-user-email"]
+        ]
+      }
     },
     "backend": [
       {
@@ -16,9 +25,19 @@
   {
     "endpoint": "/api/auth/role-request",
     "method": "POST",
-    "input_headers": "./partials/common-headers.json::with-content-type",
+    "input_headers": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
-      "auth/validator": "./partials/jwt-validator.json"
+      "auth/validator": {
+        "alg": "RS256",
+        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "disable_jwk_security": true,
+        "cookie_name": "access_token",
+        "propagate_claims": [
+          ["sub", "x-user-id"],
+          ["role", "x-user-role"],
+          ["email", "x-user-email"]
+        ]
+      }
     },
     "backend": [
       {
@@ -30,9 +49,19 @@
   {
     "endpoint": "/api/v1/role-requests/",
     "method": "GET",
-    "input_headers": "./partials/common-headers.json::standard",
+    "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
-      "auth/validator": "./partials/jwt-validator.json"
+      "auth/validator": {
+        "alg": "RS256",
+        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "disable_jwk_security": true,
+        "cookie_name": "access_token",
+        "propagate_claims": [
+          ["sub", "x-user-id"],
+          ["role", "x-user-role"],
+          ["email", "x-user-email"]
+        ]
+      }
     },
     "backend": [
       {
@@ -44,9 +73,19 @@
   {
     "endpoint": "/api/v1/role-requests/{request_id}/approve",
     "method": "POST",
-    "input_headers": "./partials/common-headers.json::standard",
+    "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
-      "auth/validator": "./partials/jwt-validator.json"
+      "auth/validator": {
+        "alg": "RS256",
+        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "disable_jwk_security": true,
+        "cookie_name": "access_token",
+        "propagate_claims": [
+          ["sub", "x-user-id"],
+          ["role", "x-user-role"],
+          ["email", "x-user-email"]
+        ]
+      }
     },
     "backend": [
       {
@@ -58,9 +97,19 @@
   {
     "endpoint": "/api/v1/role-requests/{request_id}/reject",
     "method": "POST",
-    "input_headers": "./partials/common-headers.json::standard",
+    "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
-      "auth/validator": "./partials/jwt-validator.json"
+      "auth/validator": {
+        "alg": "RS256",
+        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "disable_jwk_security": true,
+        "cookie_name": "access_token",
+        "propagate_claims": [
+          ["sub", "x-user-id"],
+          ["role", "x-user-role"],
+          ["email", "x-user-email"]
+        ]
+      }
     },
     "backend": [
       {
@@ -69,4 +118,3 @@
       }
     ]
   }
-]

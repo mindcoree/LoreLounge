@@ -1,5 +1,4 @@
-[
-  {
+{
     "endpoint": "/api/auth/register",
     "method": "POST",
     "output_encoding": "no-op",
@@ -54,4 +53,3 @@
       }
     ]
   }
-]

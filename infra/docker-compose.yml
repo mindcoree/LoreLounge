@@ -184,8 +184,10 @@ services:
     networks:
       - lorelounge_net
     volumes:
-      - ../gateway/krakend.json:/etc/krakend/krakend.json:ro
-      - ../services/auth/certs/public_key.pem:/etc/krakend/certs/public_key.pem:ro
+      - ../gateway/krakend:/etc/krakend
+    environment:
+      - FC_ENABLE=1
+    command: run -c /etc/krakend/krakend.tmpl.json
     depends_on:
       auth:
         condition: service_healthy

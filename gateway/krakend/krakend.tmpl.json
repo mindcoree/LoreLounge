@@ -1,0 +1,12 @@
+{
+  "$schema": "https://www.krakend.io/schema/v3.json",
+  "version": 3,
+  "name": "LoreLounge API Gateway",
+  "port": 8080,
+  "timeout": "5000ms",
+  "output_encoding": "json",
+  "endpoints": [
+    {{ include "endpoints/auth-public.json" }},
+    {{ include "endpoints/auth-protected.json" }}
+  ]
+}
