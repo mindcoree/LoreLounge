@@ -1,20 +1,29 @@
-"""
-API v1: эндпоинты управления заявками на роль (только ADMIN).
-"""
+from typing import Annotated, Optional
+from fastapi import APIRouter, Query, Form
+from uuid import UUID
 
-from typing import Optional
-
-from fastapi import APIRouter, Query
-
-from api.dependencies import AdminGuard, RoleRequestServiceDep
+from ..auth.dependencies import AdminGuard, PayloadEntity
+from .dependencies import RoleRequestServiceDep
 from domain.common.enums import RoleRequestStatus
-from domain.role_requests.schemas import RoleRequestOut, RoleRequestListOut
+from .schemas import RoleRequestCreate, RoleRequestOut, RoleRequestListOut
 
 router = APIRouter()
 
+@router.post(
+    "/role-request",
+    response_model=RoleRequestOut,
+    summary="Создать заявку на смену роли",
+)
+async def create_role_request(
+    data: Annotated[RoleRequestCreate, Form()],
+    service: RoleRequestServiceDep,
+    payload: PayloadEntity,
+) -> RoleRequestOut:
+    """Создаёт заявку на смену роли для текущего пользователя."""
+    return await service.create_request(entity_id=UUID(payload.sub), data=data)
 
 @router.get(
-    "/",
+    "/role-requests/",
     response_model=RoleRequestListOut,
     summary="Список заявок на смену роли",
 )
@@ -34,9 +43,8 @@ async def list_role_requests(
         items=[RoleRequestOut.model_validate(item) for item in items],
     )
 
-
 @router.post(
-    "/{request_id}/approve",
+    "/role-requests/{request_id}/approve",
     response_model=RoleRequestOut,
     summary="Одобрить заявку на роль",
 )
@@ -49,9 +57,8 @@ async def approve_role_request(
     request = await service.approve_request(request_id)
     return RoleRequestOut.model_validate(request)
 
-
 @router.post(
-    "/{request_id}/reject",
+    "/role-requests/{request_id}/reject",
     response_model=RoleRequestOut,
     summary="Отклонить заявку на роль",
 )

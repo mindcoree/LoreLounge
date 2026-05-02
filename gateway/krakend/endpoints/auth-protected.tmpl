@@ -1,12 +1,14 @@
 {
     "endpoint": "/api/auth/me",
     "method": "GET",
+    "output_encoding": "no-op",
     "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
       "auth/validator": {
         "alg": "RS256",
-        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
         "disable_jwk_security": true,
+        "cache": true,
         "cookie_name": "access_token",
         "propagate_claims": [
           ["sub", "x-user-id"],
@@ -17,7 +19,7 @@
     },
     "backend": [
       {
-        "url_pattern": "/api/v1/me",
+        "url_pattern": "/api/auth/me",
         "host": ["http://auth:8000"]
       }
     ]
@@ -25,12 +27,14 @@
   {
     "endpoint": "/api/auth/role-request",
     "method": "POST",
+    "output_encoding": "no-op",
     "input_headers": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
       "auth/validator": {
         "alg": "RS256",
-        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
         "disable_jwk_security": true,
+        "cache": true,
         "cookie_name": "access_token",
         "propagate_claims": [
           ["sub", "x-user-id"],
@@ -41,20 +45,22 @@
     },
     "backend": [
       {
-        "url_pattern": "/api/v1/role-request",
+        "url_pattern": "/api/auth/role-request",
         "host": ["http://auth:8000"]
       }
     ]
   },
   {
-    "endpoint": "/api/v1/role-requests/",
+    "endpoint": "/api/auth/role-requests/",
     "method": "GET",
+    "output_encoding": "no-op",
     "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
       "auth/validator": {
         "alg": "RS256",
-        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
         "disable_jwk_security": true,
+        "cache": true,
         "cookie_name": "access_token",
         "propagate_claims": [
           ["sub", "x-user-id"],
@@ -65,20 +71,22 @@
     },
     "backend": [
       {
-        "url_pattern": "/api/v1/role-requests/",
+        "url_pattern": "/api/auth/role-requests/",
         "host": ["http://auth:8000"]
       }
     ]
   },
   {
-    "endpoint": "/api/v1/role-requests/{request_id}/approve",
+    "endpoint": "/api/auth/role-requests/{request_id}/approve",
     "method": "POST",
+    "output_encoding": "no-op",
     "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
       "auth/validator": {
         "alg": "RS256",
-        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
         "disable_jwk_security": true,
+        "cache": true,
         "cookie_name": "access_token",
         "propagate_claims": [
           ["sub", "x-user-id"],
@@ -89,20 +97,22 @@
     },
     "backend": [
       {
-        "url_pattern": "/api/v1/role-requests/{request_id}/approve",
+        "url_pattern": "/api/auth/role-requests/{request_id}/approve",
         "host": ["http://auth:8000"]
       }
     ]
   },
   {
-    "endpoint": "/api/v1/role-requests/{request_id}/reject",
+    "endpoint": "/api/auth/role-requests/{request_id}/reject",
     "method": "POST",
+    "output_encoding": "no-op",
     "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
     "extra_config": {
       "auth/validator": {
         "alg": "RS256",
-        "jwk_url": "http://auth:8000/api/v1/.well-known/jwks.json",
+        "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
         "disable_jwk_security": true,
+        "cache": true,
         "cookie_name": "access_token",
         "propagate_claims": [
           ["sub", "x-user-id"],
@@ -113,7 +123,7 @@
     },
     "backend": [
       {
-        "url_pattern": "/api/v1/role-requests/{request_id}/reject",
+        "url_pattern": "/api/auth/role-requests/{request_id}/reject",
         "host": ["http://auth:8000"]
       }
     ]

@@ -1,0 +1,65 @@
+{
+  "endpoint": "/api/auth/register",
+  "method": "POST",
+  "output_encoding": "no-op",
+  "backend": [
+    {
+      "url_pattern": "/api/auth/register",
+      "host": [
+        "http://auth:8000"
+      ]
+    }
+  ]
+},
+{
+  "endpoint": "/api/auth/login",
+  "method": "POST",
+  "output_encoding": "no-op",
+  "backend": [
+    {
+      "url_pattern": "/api/auth/login",
+      "host": [
+        "http://auth:8000"
+      ]
+    }
+  ]
+},
+{
+  "endpoint": "/api/auth/logout",
+  "method": "POST",
+  "output_encoding": "no-op",
+  "backend": [
+    {
+      "url_pattern": "/api/auth/logout",
+      "host": [
+        "http://auth:8000"
+      ]
+    }
+  ]
+},
+{
+  "endpoint": "/api/auth/password-reset-request",
+  "method": "POST",
+  "output_encoding": "no-op",
+  "backend": [
+    {
+      "url_pattern": "/api/auth/password-reset-request",
+      "host": [
+        "http://auth:8000"
+      ]
+    }
+  ]
+},
+{
+  "endpoint": "/api/auth/password-reset-confirm",
+  "method": "POST",
+  "output_encoding": "no-op",
+  "backend": [
+    {
+      "url_pattern": "/api/auth/password-reset-confirm",
+      "host": [
+        "http://auth:8000"
+      ]
+    }
+  ]
+}

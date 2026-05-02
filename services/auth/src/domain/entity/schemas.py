@@ -99,3 +99,17 @@ class PasswordResetResponse(BaseModel):
 class PasswordResetNotification(BaseModel):
     to_email: EmailStr
     reset_link: str
+
+class DomainAuthEntity(BaseModel):
+    id: UUID
+    login: str
+    email: str
+    role: Role
+    hash_password: str
+
+class DomainPasswordResetToken(BaseModel):
+    id: int
+    entity_id: UUID
+    token_hash: str
+    expires_at: datetime
+    used: bool

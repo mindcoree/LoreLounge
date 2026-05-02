@@ -12,7 +12,8 @@ from fastapi import FastAPI
 
 from core.config import settings
 from infrastructure.db.session import db_helper
-from api.v1 import router_v1
+from api.router import auth_router
+from api.exception_handlers import register_exception_handlers
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,22 +45,27 @@ async def lifespan(app: FastAPI):
 
 
 # ── Приложение ────────────────────────────────────────────────────────────────
-
-
 app = FastAPI(
     title="LoreLounge — Auth Service",
     description="Микросервис аутентификации и авторизации для платформы LoreLounge.",
     version="0.1.0",
     lifespan=lifespan,
-    docs_url="/api/v1/docs",
-    redoc_url="/api/v1/redoc",
-    openapi_url="/api/v1/openapi.json",
-)
+    # Указываем root_path /api
+    root_path="/api",
+    # Путь к Swagger станет /api/auth/docs
+    docs_url="/auth/docs",
+    # OpenAPI JSON будет по адресу /api/auth/openapi.json
+    openapi_url="/auth/openapi.json",
+    # Настройки для "чистоты" Swagger
+    swagger_ui_parameters={"defaultModelsExpandDepth": -1} 
+)   
 
-# Роуты
-app.include_router(router_v1, prefix="/api/v1", tags=["v1"])
+# ❗ Подключаем всё под префиксом /auth
+app.include_router(auth_router, prefix="/auth") 
 
+# Обработчики исключений
+register_exception_handlers(app)
 
-@app.get("/healthz", tags=["infra"], summary="Проверка работоспособности сервиса")
+@app.get("/healthz", tags=["Infra"], summary="Проверка работоспособности сервиса")
 async def health_check() -> dict:
     return {"status": "ok", "service": "auth"}

@@ -21,12 +21,11 @@ networks:
   auth_db_net:
     driver: bridge
     # internal: true # 🔒 Закомментировано для DataGrip
-    
-  # Сеть для общения микросервисов с брокером сообщений
+
+    # Сеть для общения микросервисов с брокером сообщений
   broker_net:
     driver: bridge
     internal: true
-
 
 services:
 
@@ -113,12 +112,14 @@ services:
       timeout: 5s
       retries: 5
 
-# Auth Service
+  # Auth Service
   auth:
     build:
       context: ../services/auth
       dockerfile: Dockerfile
     container_name: auth
+    ports:
+      - "8000:8000" # ❗ Только для отладки напрямую  
     restart: always
     networks:
       - lorelounge_net
