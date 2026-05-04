@@ -12,6 +12,7 @@ from fastapi import FastAPI
 
 from config.settings import settings
 from infrastructure.db.db_helper import db_helper
+from api.handlers import setup_exception_handlers
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,3 +61,7 @@ if __name__ == "__main__":
         host=settings.run.host,
         port=settings.run.port,
     )
+
+
+# Регистрируем обработчики ошибок одной строчкой!
+setup_exception_handlers(app)
