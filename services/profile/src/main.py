@@ -41,8 +41,6 @@ app = FastAPI(
     description="Микросервис профилей для платформы LoreLounge.",
     version="0.1.0",
     lifespan=lifespan,
-    # Указываем root_path /api
-    root_path="/api",
     # Путь к Swagger станет /api/profile/docs (если включен)
     docs_url="/profile/docs" if settings.run.show_docs else None,
     # Настройки для "чистоты" Swagger
@@ -55,13 +53,16 @@ app = FastAPI(
 async def health_check() -> dict:
     return {"status": "ok", "service": "profile"}
 
+# Регистрируем обработчики ошибок одной строчкой!
+setup_exception_handlers(app)
+
+
+
+
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host=settings.run.host,
         port=settings.run.port,
     )
-
-
-# Регистрируем обработчики ошибок одной строчкой!
-setup_exception_handlers(app)
