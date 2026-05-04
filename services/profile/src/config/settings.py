@@ -11,7 +11,6 @@ from typing import Any, cast
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .cors import CORSSettings
 from .database import DatabaseSettings
 from .prefixes import ApiPrefix
 
@@ -40,7 +39,6 @@ class Settings(BaseSettings):
     run: RunSettings = Field(default_factory=RunSettings)
     api: ApiPrefix = Field(default_factory=ApiPrefix)
     db: DatabaseSettings = Field(default_factory=cast(Any, DatabaseSettings))
-    cors: CORSSettings = Field(default_factory=CORSSettings)
 
 
 settings = Settings()
