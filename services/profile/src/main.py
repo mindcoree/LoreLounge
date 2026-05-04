@@ -7,7 +7,7 @@
 
 import logging
 from contextlib import asynccontextmanager
-
+import uvicorn
 from fastapi import FastAPI
 
 from config.settings import settings
@@ -53,3 +53,10 @@ app = FastAPI(
 @app.get("/healthz", tags=["Infra"], summary="Проверка работоспособности сервиса")
 async def health_check() -> dict:
     return {"status": "ok", "service": "profile"}
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host=settings.run.host,
+        port=settings.run.port,
+    )
