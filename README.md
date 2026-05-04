@@ -21,35 +21,35 @@ LoreLounge (от слов Lore — история, знания вселенно
 
 ```mermaid
 flowchart LR
-    subgraph Public[Public Entry]
+    subgraph Public["Public Entry "]
         direction LR
         Browser["Browser"]
         Nginx["Nginx :80"]
     end
 
-    subgraph Frontend[Frontend]
+    subgraph Frontend["Frontend "]
         direction LR
         NextJS["Next.js :3000"]
     end
 
-    subgraph Gateway[API Gateway]
+    subgraph Gateway["API Gateway "]
         direction LR
         KrakenD["KrakenD :8080"]
     end
 
-    subgraph Services[Services]
+    subgraph Services["Services "]
         direction LR
         Auth["auth :8000"]
         Profile["profile :8000"]
         Notif["notification"]
     end
 
-    subgraph Broker[Message Queue]
+    subgraph Broker["Message Queue "]
         direction LR
         RMQ["rabbitmq :5672"]
     end
 
-    subgraph Storage[Storage]
+    subgraph Storage["Storage "]
         direction LR
         PG["postgres_auth :5432"]
         Redis["redis_auth :6379"]
