@@ -1,11 +1,13 @@
-__pycache__
+__pycache__/
 *.pyc
-.pytest_cache
-.mypy_cache
-.ruff_cache
-.venv
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
 .env
 .env.*
 .DS_Store
 *.log
-migrations/versions/__pycache__
+# Ignore compiled Python in migrations
+src/infrastructure/db/migrations/versions/__pycache__/
+src/infrastructure/db/migrations/__pycache__/
