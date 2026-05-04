@@ -17,22 +17,61 @@ LoreLounge (от слов Lore — история, знания вселенно
 
 ## Архитектура
 
-Система построена на 4 независимых слоя:
+Кратко: единственная публичная точка входа - Nginx (:80). Все остальное доступно только внутри Docker сетей.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Слой 1: Внешний (The Front Door)                              │
-│  Nginx (:80) → KrakenD (:8080) → Next.js (:3000)              │
-├─────────────────────────────────────────────────────────────────┤
-│  Слой 2: Микросервисы                                      │
-│  auth (:8000), notification (FastStream, только подписка) │
-├─────────────────────────────────────────────────────────────────┤
-│  Слой 3: Event-Driven                                      │
-│  RabbitMQ (:5672)                                           │
-├─────────────────────────────────────────────────────────────────┤
-│  Слой 4: Хранение                                         │
-│  postgres_auth (:5432), redis_auth (:6379)                  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Public[Public Entry]
+        direction LR
+        Browser["Browser"]
+        Nginx["Nginx :80"]
+    end
+
+    subgraph Frontend[Frontend]
+        direction LR
+        NextJS["Next.js :3000"]
+    end
+
+    subgraph Gateway[API Gateway]
+        direction LR
+        KrakenD["KrakenD :8080"]
+    end
+
+    subgraph Services[Services]
+        direction LR
+        Auth["auth :8000"]
+        Profile["profile :8000"]
+        Notif["notification"]
+    end
+
+    subgraph Broker[Message Queue]
+        direction LR
+        RMQ["rabbitmq :5672"]
+    end
+
+    subgraph Storage[Storage]
+        direction LR
+        PG["postgres_auth :5432"]
+        Redis["redis_auth :6379"]
+    end
+
+    Browser -->|"GET /"| Nginx
+    Browser -->|"POST /api/*"| Nginx
+    Nginx -->|"/"| NextJS
+    Nginx -->|"/api/*"| KrakenD
+    KrakenD -->|"public + jwt-protected"| Auth
+    KrakenD -->|"public + jwt-protected"| Profile
+    Auth -->|"publish"| RMQ
+    RMQ -->|"deliver"| Notif
+    Auth -->|"read/write"| PG
+    Auth -->|"cache"| Redis
+
+    style Public fill:#F2F2F2, stroke:#1F2A44, stroke-width:2px
+    style Frontend fill:#D9E5E4, stroke:#1F2A44, stroke-width:2px
+    style Gateway fill:#FFF2CC, stroke:#1F2A44, stroke-width:2px
+    style Services fill:#E2F0CB, stroke:#1F2A44, stroke-width:2px
+    style Storage fill:#C9DAF7, stroke:#1F2A44, stroke-width:2px
+    style Broker fill:#FFD1DC, stroke:#1F2A44, stroke-width:2px
 ```
 
 ### Сетевая изоляция
@@ -113,44 +152,44 @@ make down
 |--------|-----|------|
 | Frontend | http://localhost | 3000 |
 | API Gateway | http://localhost/api | 8080 |
-| Auth OpenAPI | http://localhost/api/v1/docs | 8000 |
+| Auth OpenAPI | http://localhost/api/auth/docs | 8000 |
 | RabbitMQ UI | http://localhost:15672 | 15672 |
 
 ## Gateway поток (Nginx)
 
 ```
 /api/*       → KrakenD (:8080) → auth (:8000)
-/api/v1/docs → auth:8000 (напрямую для Swagger UI)
+/api/auth/docs → auth:8000 (напрямую для Swagger UI)
 /*          → Frontend (:3000)
 ```
 
 - Nginx — единственная публичная точка входа (:80)
 - `/api/*` → KrakenD
-- `/api/v1/docs`, `/api/v1/redoc`, `/api/v1/openapi.json` → auth напрямую (для Swagger)
+- `/api/auth/docs`, `/api/auth/redoc`, `/api/auth/openapi.json` → auth напрямую (для Swagger)
 - `/*` → Frontend
 
 ## API Endpoints
 
-### Auth Service (`/api/v1/`)
+### Auth Service (`/api/auth/`)
 
 | Метод | Путь | Описание |
 |-------|------|----------|
-| POST | /api/v1/register | Регистрация пользователя |
-| POST | /api/v1/login | Вход (устанавливает http-only cookies) |
-| POST | /api/v1/logout | Выход (удаляет cookies) |
-| GET | /api/v1/me | Текущий пользователь (из JWT payload) |
-| POST | /api/v1/role-request | Запрос на смену роли |
-| POST | /api/v1/password-reset-request | Запрос сброса пароля |
-| POST | /api/v1/password-reset-confirm | Подтверждение сброса пароля |
-| GET | /api/v1/.well-known/jwks.json | JWKS для KrakenD |
+| POST | /api/auth/register | Регистрация пользователя |
+| POST | /api/auth/login | Вход (устанавливает http-only cookies) |
+| POST | /api/auth/logout | Выход (удаляет cookies) |
+| GET | /api/auth/me | Текущий пользователь (из JWT payload) |
+| POST | /api/auth/role-request | Запрос на смену роли |
+| POST | /api/auth/password-reset-request | Запрос сброса пароля |
+| POST | /api/auth/password-reset-confirm | Подтверждение сброса пароля |
+| GET | /api/auth/.well-known/jwks.json | JWKS для KrakenD |
 
-### Role Requests (`/api/v1/role-requests/`)
+### Role Requests (`/api/auth/role-requests/`)
 
 | Метод | Путь | Описание |
 |-------|------|----------|
-| GET | /api/v1/role-requests/ | Список заявок (admin) |
-| POST | /api/v1/role-requests/{id}/approve | Одобрить заявку |
-| POST | /api/v1/role-requests/{id}/reject | Отклонить заявку |
+| GET | /api/auth/role-requests/ | Список заявок (admin) |
+| POST | /api/auth/role-requests/{id}/approve | Одобрить заявку |
+| POST | /api/auth/role-requests/{id}/reject | Отклонить заявку |
 
 ## Переменные окружения
 
@@ -199,9 +238,9 @@ gateway/krakend/
 ### Защищённые эндпоинты (требуют JWT)
 - `/api/auth/me` → auth
 - `/api/auth/role-request` → auth
-- `/api/v1/role-requests/` → auth
-- `/api/v1/role-requests/{id}/approve` → auth
-- `/api/v1/role-requests/{id}/reject` → auth
+- `/api/auth/role-requests/` → auth
+- `/api/auth/role-requests/{id}/approve` → auth
+- `/api/auth/role-requests/{id}/reject` → auth
 
 **Проверка конфига:**
 ```bash
