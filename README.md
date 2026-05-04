@@ -66,12 +66,14 @@ flowchart LR
     Auth -->|"read/write"| PG
     Auth -->|"cache"| Redis
 
-    style Public fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px
-    style Frontend fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px
-    style Gateway fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px
-    style Services fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px
-    style Storage fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px
-    style Broker fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px
+    style Public fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px, color:#1F2A44, font-weight:600
+    style Frontend fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px, color:#1F2A44, font-weight:600
+    style Gateway fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px, color:#1F2A44, font-weight:600
+    style Services fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px, color:#1F2A44, font-weight:600
+    style Storage fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px, color:#1F2A44, font-weight:600
+    style Broker fill:#E6E6E6, stroke:#1F2A44, stroke-width:2px, color:#1F2A44, font-weight:600
+
+    linkStyle 0,1,2,3,4,5,6,7,8,9 stroke:#1F2A44, stroke-width:2px
 ```
 
 ### Сетевая изоляция
