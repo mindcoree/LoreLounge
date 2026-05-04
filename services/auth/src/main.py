@@ -9,7 +9,6 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-import uvicorn
 from core.config import settings
 from infrastructure.db.session import db_helper
 from api.router import auth_router
@@ -69,10 +68,3 @@ register_exception_handlers(app)
 @app.get("/healthz", tags=["Infra"], summary="Проверка работоспособности сервиса")
 async def health_check() -> dict:
     return {"status": "ok", "service": "auth"}
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host=settings.run.host,
-        port=settings.run.port,
-    )
