@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { llFetchJson } from "@/lib/llApi";
+import { apiFetchJson } from "@/lib/apiClient";
 
 type PasswordResetResponse = { detail: string };
 
@@ -59,7 +59,7 @@ export default function ResetPasswordForm({ initialToken = "" }: ResetPasswordFo
     setPending(true);
     setResult(null);
     try {
-      const res = await llFetchJson<PasswordResetResponse>("/auth/password-reset-confirm", {
+      const res = await apiFetchJson<PasswordResetResponse>("/auth/password-reset-confirm", {
         method: "POST",
         headers: {
           "content-type": "application/json",

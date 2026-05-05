@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { llFetchJson } from "@/lib/llApi";
+import { apiFetchJson } from "@/lib/apiClient";
 
 export default function DebugPage() {
   const [path, setPath] = useState("/auth/me");
@@ -25,7 +25,7 @@ export default function DebugPage() {
     setPending(true);
     setResult(null);
     try {
-      const res = await llFetchJson<unknown>(path, {
+      const res = await apiFetchJson<unknown>(path, {
         method,
         form: method === "POST" ? parsedForm ?? undefined : undefined,
       });

@@ -19,7 +19,7 @@ async function parseJsonSafe(res: Response): Promise<unknown> {
   }
 }
 
-export async function llFetchJson<T>(
+export async function apiFetchJson<T>(
   path: string,
   init?: RequestInit & { form?: Record<string, string> },
 ): Promise<ApiResult<T>> {

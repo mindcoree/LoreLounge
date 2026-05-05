@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { llFetchJson } from "@/lib/llApi";
+import { apiFetchJson } from "@/lib/apiClient";
 
 export default function MeActions() {
   const [pending, setPending] = useState(false);
@@ -10,7 +10,7 @@ export default function MeActions() {
   async function refresh() {
     setPending(true);
     try {
-      const res = await llFetchJson<unknown>("/auth/me", { method: "GET" });
+      const res = await apiFetchJson<unknown>("/auth/me", { method: "GET" });
       setLast(res);
     } finally {
       setPending(false);
@@ -20,7 +20,7 @@ export default function MeActions() {
   async function logout() {
     setPending(true);
     try {
-      const res = await llFetchJson<void>("/auth/logout", { method: "POST" });
+      const res = await apiFetchJson<void>("/auth/logout", { method: "POST" });
       setLast(res);
     } finally {
       setPending(false);

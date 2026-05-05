@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { llFetchJson } from "@/lib/llApi";
+import { apiFetchJson } from "@/lib/apiClient";
 import MeActions from "./ui/MeActions";
 
 export const dynamic = "force-dynamic";
 
 async function fetchMe() {
-  // llFetchJson сам добавит куки на сервере и выберет правильный baseUrl
-  return await llFetchJson<any>("/auth/me");
+  // apiFetchJson сам добавит куки на сервере и выберет правильный baseUrl
+  return await apiFetchJson<any>("/auth/me");
 }
 
 export default async function MePage() {

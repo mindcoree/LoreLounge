@@ -49,8 +49,9 @@ if not os.environ.get("CONFIG__DB__URL"):
 # ── 4. Импортируем настройки и модели ────────────────────────────────────────
 from core.config import settings
 from infrastructure.db.base import Base
-import infrastructure.db.models  # noqa: F401 — чтобы alembic видел таблицы
-from src.infrastructure.db.models import Base  # noqa: F401, F403 — чтобы alembic видел таблицы
+import infrastructure.db.models  # noqa: F401, F403 — чтобы alembic видел таблицы
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 config = context.config

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Mail, Lock } from "lucide-react";
-import { llFetchJson } from "@/lib/llApi";
+import { apiFetchJson } from "@/lib/apiClient";
 
 type AuthMode = "login" | "register" | "forgot";
 
@@ -32,7 +32,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     try {
       if (mode === "login") {
-        const res = await llFetchJson<{ access: string; refresh: string }>("/auth/login", {
+        const res = await apiFetchJson<{ access: string; refresh: string }>("/auth/login", {
           method: "POST",
           form: {
             email: form.email,
@@ -46,7 +46,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           setError(res.error || "Ошибка входа");
         }
       } else if (mode === "register") {
-        const res = await llFetchJson<{ id: string }>("/auth/register", {
+        const res = await apiFetchJson<{ id: string }>("/auth/register", {
           method: "POST",
           form: {
             email: form.email,
@@ -63,7 +63,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           setError(res.error || "Ошибка регистрации");
         }
       } else if (mode === "forgot") {
-        const res = await llFetchJson<{ detail: string }>("/auth/password-reset-request", {
+        const res = await apiFetchJson<{ detail: string }>("/auth/password-reset-request", {
           method: "POST",
           body: JSON.stringify({ email: form.email }),
         });
