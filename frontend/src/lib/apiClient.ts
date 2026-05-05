@@ -32,6 +32,7 @@ export async function apiFetchJson<T>(
   const url = `${baseUrl}${cleanPath}`;
 
   const headers = new Headers(init?.headers);
+  let cookieHeader: string | undefined;
 
   if (isServer) {
     try {
@@ -41,7 +42,10 @@ export async function apiFetchJson<T>(
         .getAll()
         .map(({ name, value }) => `${name}=${value}`)
         .join("; ");
-      if (cookieString) headers.set("cookie", cookieString);
+      if (cookieString) {
+        headers.set("cookie", cookieString);
+        cookieHeader = cookieString;
+      }
     } catch {
       // Игнорируем ошибки
     }
@@ -56,12 +60,35 @@ export async function apiFetchJson<T>(
     headers.set("content-type", "application/json");
   }
 
-  const res = await fetch(url, {
-    ...init,
-    headers,
-    body,
-    credentials: "include",
-  });
+  const doFetch = async () =>
+    fetch(url, {
+      ...init,
+      headers,
+      body,
+      credentials: "include",
+    });
+
+  let res = await doFetch();
+
+  if (
+    res.status === 401 &&
+    !isServer &&
+    cleanPath !== "/auth/refresh" &&
+    cleanPath !== "/auth/login"
+  ) {
+    const refreshHeaders = new Headers();
+    if (cookieHeader) refreshHeaders.set("cookie", cookieHeader);
+
+    const refreshRes = await fetch(`${baseUrl}/auth/refresh`, {
+      method: "POST",
+      headers: refreshHeaders,
+      credentials: "include",
+    });
+
+    if (refreshRes.ok) {
+      res = await doFetch();
+    }
+  }
 
   const raw = await parseJsonSafe(res);
   if (res.ok) return { ok: true, status: res.status, data: raw as T, raw };

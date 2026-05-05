@@ -15,11 +15,12 @@ from jwt.exceptions import InvalidTokenError # type: ignore
 
 from core import security as auth
 from core.config import settings
-from core.types import TOKEN_TYPE_FIELD, REFRESH_TOKEN_TYPE
+from core.types import TOKEN_TYPE_FIELD, REFRESH_TOKEN_TYPE, JTI_FIELD
 from domain.common.enums import Role
 from domain.entity.repository import AbstractAuthRepository
 from domain.common.interfaces import AbstractMessageBroker
 from domain.role_requests.repository import RoleRequestRepository
+from redis.asyncio import Redis
 from domain.common.exceptions import (
     UserAlreadyExistsError,
     InvalidCredentialsError,
@@ -52,11 +53,42 @@ class AuthServices:
         self,
         repository: AbstractAuthRepository,
         message_broker: AbstractMessageBroker,
+        redis: Redis,
         role_request_repo: Optional[RoleRequestRepository] = None,
     ) -> None:
         self.repo = repository
         self.message_broker = message_broker
+        self.redis = redis
         self.role_request_repo = role_request_repo
+
+    async def _is_refresh_revoked(self, jti: Optional[str]) -> bool:
+        if not jti:
+            return True
+        key = f"revoked:refresh:{jti}"
+        return bool(await self.redis.get(key))
+
+    async def revoke_refresh_token(self, refresh_token: str) -> None:
+        try:
+            refresh_payload = await auth.decode_jwt(token=refresh_token)
+        except InvalidTokenError:
+            return
+
+        token_type = refresh_payload.get(TOKEN_TYPE_FIELD)
+        if token_type != REFRESH_TOKEN_TYPE:
+            return
+
+        jti = refresh_payload.get(JTI_FIELD)
+        exp = refresh_payload.get("exp")
+        if not jti or not exp:
+            return
+
+        now = datetime.now(timezone.utc)
+        ttl = int(exp - now.timestamp())
+        if ttl <= 0:
+            return
+
+        key = f"revoked:refresh:{jti}"
+        await self.redis.set(key, "1", ex=ttl)
 
     async def register_entity(self, auth_in: AuthEntityIn) -> DomainAuthEntity:
         """Регистрирует нового пользователя."""
@@ -108,6 +140,10 @@ class AuthServices:
         token_type = refresh_payload.get(TOKEN_TYPE_FIELD)
         if token_type != REFRESH_TOKEN_TYPE:
             raise TokenExpiredError(f"Ожидался refresh-токен, получен: {token_type}")
+
+        jti = refresh_payload.get(JTI_FIELD)
+        if await self._is_refresh_revoked(jti):
+            raise TokenExpiredError("Refresh-токен отозван")
 
         entity_id = UUID(refresh_payload.get("sub"))
         entity = await self.repo.get_auth_entity_by_id(entity_id)

@@ -8,11 +8,14 @@ from infrastructure.db.session import SessionDep
 from infrastructure.db.repositories.auth_repo import AuthSQLAlchemyRepository
 from domain.role_requests.repository import RoleRequestRepository
 from infrastructure.broker.rabbitmq import broker
+from infrastructure.cache.redis import get_redis
+from redis.asyncio import Redis
 
-async def get_auth_service(session: SessionDep) -> AuthServices:
+async def get_auth_service(session: SessionDep, redis: Redis = Depends(get_redis)) -> AuthServices:
     return AuthServices(
         repository=AuthSQLAlchemyRepository(session=session),
         message_broker=broker,
+        redis=redis,
         role_request_repo=RoleRequestRepository(session=session),
     )
 

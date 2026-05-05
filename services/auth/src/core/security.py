@@ -13,6 +13,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone, timedelta
 from functools import lru_cache
+from uuid import uuid4
 
 import bcrypt
 import jwt
@@ -21,7 +22,7 @@ from cryptography.hazmat.primitives import serialization
 from fastapi import Response
 
 from core.config import settings
-from core.types import TOKEN_TYPE_FIELD, ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
+from core.types import TOKEN_TYPE_FIELD, ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE, JTI_FIELD
 from domain.entity.schemas import AuthEntitySchema
 
 logger = logging.getLogger(__name__)
@@ -192,7 +193,16 @@ async def create_access_token(auth_info: AuthEntitySchema) -> str:
 
 async def create_refresh_token(auth_info: AuthEntitySchema) -> str:
     """Создаёт refresh-токен (RS256, срок = refresh_expire_days)."""
-    payload = {"sub": str(auth_info.id)}
+    payload = {
+        "sub": str(auth_info.id),
+        JTI_FIELD: str(uuid4()),
+    }
+    if settings.auth.refresh_expire_min is not None:
+        return await _create_jwt(
+            token_data=payload,
+            token_type=REFRESH_TOKEN_TYPE,
+            expire_timedelta=timedelta(minutes=settings.auth.refresh_expire_min),
+        )
     return await _create_jwt(
         token_data=payload,
         token_type=REFRESH_TOKEN_TYPE,

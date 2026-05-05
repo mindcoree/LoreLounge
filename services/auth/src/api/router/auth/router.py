@@ -103,8 +103,14 @@ async def get_current_user(payload: PayloadEntity) -> AuthEntityOut:
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Выход из системы",
 )
-async def logout(response: Response) -> None:
-    """Удаляет access_token and refresh_token из cookie."""
+async def logout(
+    response: Response,
+    service: AuthServiceDep,
+    refresh_token: Annotated[str | None, Cookie(alias=REFRESH_TOKEN_COOKIE_KEY)] = None,
+) -> None:
+    """Удаляет access_token and refresh_token из cookie и отзывает refresh."""
+    if refresh_token:
+        await service.revoke_refresh_token(refresh_token)
     for key in (ACCESS_TOKEN_COOKIE_KEY, REFRESH_TOKEN_COOKIE_KEY):
         response.delete_cookie(key=key, path="/", httponly=True, samesite="lax")
 

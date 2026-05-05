@@ -38,6 +38,20 @@
   ]
 },
 {
+  "endpoint": "/api/auth/refresh",
+  "method": "POST",
+  "output_encoding": "no-op",
+  "input_headers": ["Cookie"],
+  "backend": [
+    {
+      "url_pattern": "/api/auth/refresh",
+      "host": [
+        "http://auth:8000"
+      ]
+    }
+  ]
+},
+{
   "endpoint": "/api/auth/password-reset-request",
   "method": "POST",
   "output_encoding": "no-op",

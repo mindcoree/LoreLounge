@@ -1,0 +1,59 @@
+# Gateway
+
+Единая входная точка для фронта и API.
+
+## Компоненты
+
+- **Nginx**: публичная точка входа на порту 80.
+- **KrakenD**: API Gateway, маршрутизирует запросы к микросервисам.
+
+## Потоки
+
+- `GET /` и все страницы → Next.js (`frontend:3000`).
+- `POST/GET /api/*` → KrakenD (`krakend:8080`).
+- `GET /api/auth/docs` → auth напрямую (Swagger).
+
+## Nginx
+
+Файл: `gateway/nginx.conf`
+
+- Проксирует `/api/*` в KrakenD.
+- Проксирует `/api/auth/docs` в auth (мимо KrakenD).
+- Добавляет базовые security headers.
+- Rate limit для auth-эндпоинтов.
+- CORS allowlist для dev.
+
+## KrakenD
+
+Конфиг: `gateway/krakend/krakend.tmpl.json`
+
+- Используется Flexible Configuration.
+- Публичные эндпоинты: register, login, logout, refresh, password-reset.
+- Защищённые эндпоинты: `/api/auth/me`, `/api/auth/role-*`.
+- JWT валидация: RS256 + JWKS от auth.
+
+### Важно про refresh
+
+- Endpoint `/api/auth/refresh` публичный, но требуется cookie `refresh_token`.
+- В KrakenD включён `input_headers: ["Cookie"]`, чтобы передавать cookie в auth.
+
+## Проверка конфигурации KrakenD
+
+```bash
+docker run -it --rm \
+  -v $(pwd)/gateway/krakend:/etc/krakend \
+  devopsfaith/krakend:2.5 check -c /etc/krakend/krakend.tmpl.json
+```
+
+## Troubleshooting
+
+- 502 при `/api/auth/docs` означает, что auth недоступен из nginx.
+- 404 на `/api/auth/refresh` означает, что KrakenD не перечитал конфиг.
+
+## Запуск
+
+```bash
+make up
+```
+
+Обе части запускаются через `infra/docker-compose.yml`.

@@ -41,7 +41,12 @@ class AuthJWT(BaseModel):
     public_key: Path = BASE_SERVICE_DIR / "certs" / "public_key.pem"
     algorithm: str = "RS256"
     access_expire_min: int = 15
+    refresh_expire_min: Optional[int] = None
     refresh_expire_days: int = 7
+
+
+class RedisConfig(BaseModel):
+    url: str = "redis://:redis_auth_secret@redis_auth:6379/0"
 
 
 
@@ -61,6 +66,7 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     db: DatabaseConfig
     auth: AuthJWT = AuthJWT()
+    redis: RedisConfig = RedisConfig()
 
     # URL фронтенда для формирования ссылок (password-reset и т.д.)
     frontend_url: str = "http://localhost:3000"
