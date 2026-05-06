@@ -28,18 +28,19 @@ class ProfileUpdate(BaseModel):
         None, description="URL фона профиля пользователя"
     )
 
+
 class ProfileResponse(BaseModel):
     user_id: UUID = Field(..., description="Уникальный идентификатор пользователя")
-    
+
     model_config = ConfigDict(from_attributes=True)
-
-
-
 
 
 class IgnoreUserResponse(BaseModel):
-    ignoreed_user_id: UUID = Field(..., description="Уникальный идентификатор игнорируемого пользователя")
-    ignored_profile: Optional[ProfileResponse] = Field(None, description="Профиль игнорируемого пользователя")
+    ignoreed_user_id: UUID = Field(
+        ..., description="Уникальный идентификатор игнорируемого пользователя"
+    )
+    ignored_profile: Optional[ProfileResponse] = Field(
+        None, description="Профиль игнорируемого пользователя"
+    )
 
     model_config = ConfigDict(from_attributes=True)
-    
