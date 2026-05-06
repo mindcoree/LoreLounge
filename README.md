@@ -53,7 +53,7 @@ flowchart TB
 
     subgraph services_layer["⚙️ Микросервисы"]
         Auth["auth\nFastAPI :8000"]
-        Profile["profile\nFastAPI :8000"]
+        Profile["profile\nFastAPI :8001"]
         Notification["notification\nFastStream"]
     end
 
