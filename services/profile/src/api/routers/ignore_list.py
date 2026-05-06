@@ -1,9 +1,8 @@
 from uuid import UUID
 
 from fastapi import APIRouter, status
-from dependencies.auth import GuardDep
-from dependencies.session import SessionDep
 
+from dependencies import IgnoreListServiceDep, GuardDep
 from schemas.ignore_list import IgnoreUserResponse
 
 router = APIRouter(tags=["Ignore List endpoints"]) # api/profile/
@@ -27,7 +26,7 @@ router = APIRouter(tags=["Ignore List endpoints"]) # api/profile/
 )
 async def get_my_ignore_list(
     guard: GuardDep,
-    session: SessionDep,
+    ignore_list_service: IgnoreListServiceDep,
 ):
     """Get the list of users that the current user has ignored"""
     pass
@@ -49,7 +48,7 @@ async def get_my_ignore_list(
 async def ignore_user(
     target_user_id: UUID,
     guard: GuardDep,
-    session: SessionDep,
+    ignore_list_service: IgnoreListServiceDep,
 ):
     """Add a user to the current user's ignore list"""
     pass
@@ -71,7 +70,7 @@ async def ignore_user(
 async def remove_ignored_user(
     target_user_id: UUID,
     guard: GuardDep,
-    session: SessionDep,
+    ignore_list_service: IgnoreListServiceDep,
 ):
     """Remove a user from the current user's ignore list"""
     pass

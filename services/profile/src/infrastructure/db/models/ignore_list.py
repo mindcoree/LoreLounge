@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from ..mixins import TimestampMix
+from types.mixins import TimestampMix
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, UniqueConstraint
 from .base import Base
 
 
