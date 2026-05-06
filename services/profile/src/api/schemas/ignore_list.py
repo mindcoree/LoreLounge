@@ -4,7 +4,7 @@ from uuid import UUID
 from .profile import ProfileResponse
 
 class IgnoreUserResponse(BaseModel):
-    ignoreed_user_id: UUID = Field(
+    ignored_user_id: UUID = Field(
         ..., description="Unique identifier of the ignored user"
     )
     ignored_profile: Optional[ProfileResponse] = Field(

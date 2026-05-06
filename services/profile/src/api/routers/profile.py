@@ -3,7 +3,6 @@ from dependencies.auth import GuardDep
 from dependencies.session import SessionDep
 
 from schemas.profile import ProfileUpdate, ProfileResponse
-from schemas.ignore_list import IgnoreUserResponse
 
 router = APIRouter(tags=["Profile endpoints"]) # api/profile/
 
