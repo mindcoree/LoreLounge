@@ -28,7 +28,7 @@ class DataBaseHelper:
     async def dispose(self) -> None:
         await self.engine.dispose()
 
-    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def session_getter(self) -> AsyncGenerator[AsyncSession, None]:
         """Генерирует сессию (пока без привязки к FastAPI)"""
         async with self.session_factory() as session:
             yield session
