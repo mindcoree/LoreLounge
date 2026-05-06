@@ -1,7 +1,8 @@
 from fastapi import APIRouter, status
-from dependencies import ProfileServiceDep, GuardDep
 
-from schemas.profile import ProfileUpdate, ProfileResponse, ProfileCreate
+from api.dependencies import GuardDep, ProfileServiceDep
+
+from api.schemas.profile import ProfileCreate, ProfileResponse, ProfileUpdate
 
 router = APIRouter(tags=["Profile endpoints"])  # api/profile/
 

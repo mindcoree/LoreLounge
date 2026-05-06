@@ -7,6 +7,8 @@
   "output_encoding": "json",
   "endpoints": [
     {{ include "endpoints/auth-public.tmpl" }},
-    {{ include "endpoints/auth-protected.tmpl" }}
+    {{ include "endpoints/auth-protected.tmpl" }},
+    {{ include "endpoints/profile-public.tmpl" }},
+    {{ include "endpoints/profile-protected.tmpl" }}
   ]
 }

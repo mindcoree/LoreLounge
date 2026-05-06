@@ -1,4 +1,5 @@
 from typing import TypeVar
-from models.base import Base
+
+from infrastructure.db.models.base import Base
 
 ModelType = TypeVar("ModelType", bound=Base)

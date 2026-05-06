@@ -1,7 +1,7 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
-from src.domain.exceptions import ProfileNotFoundError, ProfileAlreadyExistsError
+from domain.exceptions import ProfileAlreadyExistsError, ProfileNotFoundError
 
 
 async def profile_not_found_handler(

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from typing import Any, cast
 
-from src.domain.exceptions import (
+from domain.exceptions import (
     ProfileNotFoundError,
     ProfileAlreadyExistsError,
     SelfIgnoreError,

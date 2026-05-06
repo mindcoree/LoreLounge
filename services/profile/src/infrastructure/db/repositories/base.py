@@ -2,8 +2,8 @@ from typing import Generic, Any, cast
 from uuid import UUID
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import TypeVar
-from types.model_type import ModelType
+
+from infrastructure.db.types.model_type import ModelType
 
 
 class BaseRepository(Generic[ModelType]):

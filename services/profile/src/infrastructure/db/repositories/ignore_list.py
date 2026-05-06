@@ -1,10 +1,11 @@
 from typing import cast, Any
 from uuid import UUID
-from sqlalchemy import select, and_, delete
+from sqlalchemy import and_, delete, func, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
-from base import BaseRepository
-from models.ignore_list import IgnoreList
+
+from infrastructure.db.models.ignore_list import IgnoreList
+from infrastructure.db.repositories.base import BaseRepository
 
 class IgnoreListRepository(BaseRepository[IgnoreList]):
     def __init__(self, session: AsyncSession):
@@ -20,11 +21,17 @@ class IgnoreListRepository(BaseRepository[IgnoreList]):
             select(IgnoreList)
             .where(IgnoreList.user_id == user_id)
             .options(selectinload(IgnoreList.ignored))  # Eagerly load 'ignored' relation
+            .order_by(IgnoreList.id.desc())
             .limit(limit)
             .offset(offset)
         )
         result = await self.session.execute(query)
         return list(result.scalars().all())
+
+    async def count_ignored_users(self, user_id: UUID) -> int:
+        query = select(func.count()).select_from(IgnoreList).where(IgnoreList.user_id == user_id)
+        result = await self.session.execute(query)
+        return int(result.scalar_one())
 
     async def check_ignore_exists(self, user_id: UUID, ignored_user_id: UUID) -> bool:
         """Check if user is already in the ignore list"""

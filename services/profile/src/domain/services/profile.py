@@ -1,8 +1,9 @@
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.infrastructure.db.repositories.profile import ProfileRepository
-from src.domain.exceptions import ProfileNotFoundError, ProfileAlreadyExistsError
-from src.api.schemas.profile import ProfileUpdate, ProfileCreate
+from api.schemas.profile import ProfileCreate, ProfileUpdate
+from domain.exceptions import ProfileAlreadyExistsError, ProfileNotFoundError
+from infrastructure.db.repositories.profile import ProfileRepository
 
 class ProfileService:
     def __init__(self, session: AsyncSession):

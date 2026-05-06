@@ -3,9 +3,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, status, Query
 
-from dependencies import IgnoreListServiceDep, GuardDep
-from schemas.ignore_list import IgnoreUserResponse
-from schemas.pagination import Pagination 
+from api.dependencies import GuardDep, IgnoreListServiceDep
+from api.schemas.ignore_list import IgnoreListPageResponse, IgnoreUserResponse
+from api.schemas.profile import ProfileResponse
+from api.schemas.pagination import Pagination
 
 router = APIRouter(tags=["Ignore List endpoints"]) # api/profile/
 
@@ -16,7 +17,7 @@ router = APIRouter(tags=["Ignore List endpoints"]) # api/profile/
 
 @router.get(
     "/me/ignored",
-    response_model=list[IgnoreUserResponse],
+    response_model=IgnoreListPageResponse,
     summary="Get My Ignore List",
     description="Retrieve the list of users that the currently authenticated user has ignored.",
     responses={
@@ -32,18 +33,28 @@ async def get_my_ignore_list(
     pagination: Annotated[Pagination, Query()],
 ):
     """Get the list of users that the current user has ignored"""
-    ignored_users = await ignore_list_service.get_ignore_list(
+    ignored_users, total = await ignore_list_service.get_ignore_list(
         user_id=guard,
         limit=pagination.limit,
         offset=pagination.offset,
     )
-    return [
+    items = [
         IgnoreUserResponse(
             ignored_user_id=ignore_entry.ignored_user_id,
-            ignored_profile=ignore_entry.ignored,
+            ignored_profile=(
+                ProfileResponse.model_validate(ignore_entry.ignored, from_attributes=True)
+                if ignore_entry.ignored is not None
+                else None
+            ),
         )
         for ignore_entry in ignored_users
     ]
+    return IgnoreListPageResponse(
+        items=items,
+        total=total,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
 
 
 @router.post(

@@ -1,8 +1,10 @@
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.profile import Profile
-from base import BaseRepository
+
+from infrastructure.db.models.profile import Profile
+from infrastructure.db.repositories.base import BaseRepository
 
 
 class ProfileRepository(BaseRepository[Profile]):

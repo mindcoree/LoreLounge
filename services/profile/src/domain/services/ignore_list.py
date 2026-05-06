@@ -1,11 +1,13 @@
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.infrastructure.db.repositories.ignore_list import IgnoreListRepository
-from src.domain.exceptions.ignore_list import (
-    SelfIgnoreWithUserIdError,
+from domain.exceptions.ignore_list import (
+    SelfIgnoreError,
     UserAlreadyIgnoredError,
     UserNotInIgnoreListError,
 )
+from infrastructure.db.models.ignore_list import IgnoreList
+from infrastructure.db.repositories.ignore_list import IgnoreListRepository
 
 
 class IgnoreListService:
@@ -17,12 +19,12 @@ class IgnoreListService:
     async def add_ignored_user(self, user_id: UUID, ignored_user_id: UUID) -> None:
         """
         Add a user to the ignore list.
-        Raises SelfIgnoreWithUserIdError if user tries to ignore themselves.
+        Raises SelfIgnoreError if user tries to ignore themselves.
         Raises UserAlreadyIgnoredError if user is already ignored.
         """
         # Prevent user from ignoring themselves
         if user_id == ignored_user_id:
-            raise SelfIgnoreWithUserIdError(user_id)
+            raise SelfIgnoreError()
 
         # Check if user is already ignored
         exists = await self.ignore_list_repo.check_ignore_exists(user_id, ignored_user_id)
@@ -50,13 +52,15 @@ class IgnoreListService:
         # Commit the transaction
         await self.session.commit()
 
-    async def get_ignore_list(self, user_id: UUID, limit: int, offset: int) -> list:
+    async def get_ignore_list(self, user_id: UUID, limit: int, offset: int) -> tuple[list[IgnoreList], int]:
         """Get all users ignored by the given user"""
-        return await self.ignore_list_repo.get_ignored_users(
+        ignored_users = await self.ignore_list_repo.get_ignored_users(
             user_id=user_id,
             limit=limit,
             offset=offset,
         )
+        total = await self.ignore_list_repo.count_ignored_users(user_id=user_id)
+        return ignored_users, total
 
     async def is_user_ignored(self, user_id: UUID, ignored_user_id: UUID) -> bool:
         """Check if a user is in the ignore list"""

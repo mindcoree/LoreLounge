@@ -1,0 +1,157 @@
+{
+  "endpoint": "/api/profile/me",
+  "method": "GET",
+  "output_encoding": "no-op",
+  "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
+  "extra_config": {
+    "auth/validator": {
+      "alg": "RS256",
+      "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
+      "disable_jwk_security": true,
+      "cache": true,
+      "cookie_name": "access_token",
+      "propagate_claims": [
+        ["sub", "x-user-id"],
+        ["role", "x-user-role"],
+        ["email", "x-user-email"]
+      ]
+    }
+  },
+  "backend": [
+    {
+      "url_pattern": "/api/profile/me",
+      "host": ["http://profile:8000"]
+    }
+  ]
+},
+{
+  "endpoint": "/api/profile/me",
+  "method": "POST",
+  "output_encoding": "no-op",
+  "input_headers": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"],
+  "extra_config": {
+    "auth/validator": {
+      "alg": "RS256",
+      "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
+      "disable_jwk_security": true,
+      "cache": true,
+      "cookie_name": "access_token",
+      "propagate_claims": [
+        ["sub", "x-user-id"],
+        ["role", "x-user-role"],
+        ["email", "x-user-email"]
+      ]
+    }
+  },
+  "backend": [
+    {
+      "url_pattern": "/api/profile/me",
+      "host": ["http://profile:8000"]
+    }
+  ]
+},
+{
+  "endpoint": "/api/profile/me",
+  "method": "PATCH",
+  "output_encoding": "no-op",
+  "input_headers": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"],
+  "extra_config": {
+    "auth/validator": {
+      "alg": "RS256",
+      "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
+      "disable_jwk_security": true,
+      "cache": true,
+      "cookie_name": "access_token",
+      "propagate_claims": [
+        ["sub", "x-user-id"],
+        ["role", "x-user-role"],
+        ["email", "x-user-email"]
+      ]
+    }
+  },
+  "backend": [
+    {
+      "url_pattern": "/api/profile/me",
+      "host": ["http://profile:8000"]
+    }
+  ]
+},
+{
+  "endpoint": "/api/profile/me/ignored",
+  "method": "GET",
+  "output_encoding": "no-op",
+  "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
+  "input_query_strings": ["*"],
+  "extra_config": {
+    "auth/validator": {
+      "alg": "RS256",
+      "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
+      "disable_jwk_security": true,
+      "cache": true,
+      "cookie_name": "access_token",
+      "propagate_claims": [
+        ["sub", "x-user-id"],
+        ["role", "x-user-role"],
+        ["email", "x-user-email"]
+      ]
+    }
+  },
+  "backend": [
+    {
+      "url_pattern": "/api/profile/me/ignored",
+      "host": ["http://profile:8000"]
+    }
+  ]
+},
+{
+  "endpoint": "/api/profile/me/ignored/{target_user_id}",
+  "method": "POST",
+  "output_encoding": "no-op",
+  "input_headers": ["Content-Type", "Cookie", "x-user-id", "x-user-role", "x-user-email"],
+  "extra_config": {
+    "auth/validator": {
+      "alg": "RS256",
+      "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
+      "disable_jwk_security": true,
+      "cache": true,
+      "cookie_name": "access_token",
+      "propagate_claims": [
+        ["sub", "x-user-id"],
+        ["role", "x-user-role"],
+        ["email", "x-user-email"]
+      ]
+    }
+  },
+  "backend": [
+    {
+      "url_pattern": "/api/profile/me/ignored/{target_user_id}",
+      "host": ["http://profile:8000"]
+    }
+  ]
+},
+{
+  "endpoint": "/api/profile/me/ignored/{target_user_id}",
+  "method": "DELETE",
+  "output_encoding": "no-op",
+  "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
+  "extra_config": {
+    "auth/validator": {
+      "alg": "RS256",
+      "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
+      "disable_jwk_security": true,
+      "cache": true,
+      "cookie_name": "access_token",
+      "propagate_claims": [
+        ["sub", "x-user-id"],
+        ["role", "x-user-role"],
+        ["email", "x-user-email"]
+      ]
+    }
+  },
+  "backend": [
+    {
+      "url_pattern": "/api/profile/me/ignored/{target_user_id}",
+      "host": ["http://profile:8000"]
+    }
+  ]
+}

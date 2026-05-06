@@ -29,8 +29,19 @@
 
 - Используется Flexible Configuration.
 - Публичные эндпоинты: register, login, logout, refresh, password-reset.
-- Защищённые эндпоинты: `/api/auth/me`, `/api/auth/role-*`.
+- Публичные эндпоинты: `/api/auth/*`, `GET /api/profile/{name}`.
+- Защищённые эндпоинты: `/api/auth/me`, `/api/auth/role-*`, `/api/profile/me*`.
 - JWT валидация: RS256 + JWKS от auth.
+
+### Подключённые profile-роуты через KrakenD
+
+- `POST /api/profile/me`
+- `GET /api/profile/me`
+- `PATCH /api/profile/me`
+- `GET /api/profile/{name}`
+- `GET /api/profile/me/ignored`
+- `POST /api/profile/me/ignored/{target_user_id}`
+- `DELETE /api/profile/me/ignored/{target_user_id}`
 
 ### Важно про refresh
 

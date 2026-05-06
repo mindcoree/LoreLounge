@@ -1,7 +1,7 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
-from src.domain.exceptions import (
+from domain.exceptions import (
     SelfIgnoreError,
     UserAlreadyIgnoredError,
     UserNotInIgnoreListError,
