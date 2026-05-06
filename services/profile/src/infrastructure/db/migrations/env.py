@@ -32,7 +32,7 @@ if env_file.exists():
 
 from config.settings import settings
 from infrastructure.db.models.base import Base
-import models
+from infrastructure.db.models import profile, ignore_list  # noqa: F401 - импортируем модели, чтобы alembic видел их метаданные
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -44,7 +44,6 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-target_metadata = Base.metadata
 
 
 # ── Offline mode ──────────────────────────────────────────────────────────────
