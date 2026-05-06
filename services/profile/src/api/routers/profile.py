@@ -12,14 +12,14 @@ router = APIRouter(tags=["Profile endpoints"])  # api/profile/
 # ══════════════════════════════════════════
 
 
-@router.post(
+@router.put(
     "/me",
     response_model=ProfileResponse,
-    summary="Create My Profile",
-    description="Create a new profile for the currently authenticated user.",
-    status_code=status.HTTP_201_CREATED,
+    summary="Create/Replace My Profile",
+    description="Create or fully replace a profile for the currently authenticated user.",
+    status_code=status.HTTP_200_OK,
     responses={
-        201: {"description": "Profile successfully created"},
+        200: {"description": "Profile successfully created or replaced"},
         400: {"description": "Bad Request - Invalid input data"},
         401: {
             "description": "Unauthorized - Invalid or missing authentication credentials"
