@@ -10,24 +10,56 @@
 - Выход (logout) с отзывом refresh-токена через Redis.
 - Выдача JWKS для KrakenD.
 - Сброс пароля (request/confirm) с отправкой email через RabbitMQ.
+- Управление ролями пользователей и заявками на изменение ролей.
 
-## Архитектура
+## Технологический стек
 
-- Ядро: FastAPI + Pydantic Settings.
-- JWT: RS256, публичный ключ отдаётся через `/.well-known/jwks.json`.
-- Хранилище: PostgreSQL (основные сущности), Redis (revoked refresh tokens).
-- Брокер: RabbitMQ (уведомления о сбросе пароля).
+- **Ядро**: FastAPI + Pydantic Settings.
+- **JWT**: RS256, публичный ключ отдаётся через `/.well-known/jwks.json`.
+- **Хранилище**: PostgreSQL (основные сущности), Redis (revoked refresh tokens).
+- **Брокер**: RabbitMQ (уведомления о сбросе пароля).
+- **Миграции**: Alembic.
+
+## Структура папок
+
+```text
+auth/
+├── certs/               # RSA ключи (private.pem, public.pem)
+├── migrations/          # Alembic миграции
+├── src/
+│   ├── api/             # Маршруты и обработчики исключений
+│   │   └── router/      # Группировка эндпоинтов
+│   ├── core/            # Конфигурация, безопасность (JWT logic), типы
+│   ├── domain/          # Бизнес-логика и сущности (Clean Architecture)
+│   │   ├── common/      # Общие схемы и сущности
+│   │   ├── entity/      # Модели БД и схемы Pydantic
+│   │   └── role_requests/ # Логика заявок на роли
+│   ├── infrastructure/  # Внешние зависимости
+│   │   ├── broker/      # Интеграция с RabbitMQ
+│   │   ├── cache/       # Работа с Redis
+│   │   └── db/          # Сессии и настройки PostgreSQL
+│   └── main.py          # Точка входа FastAPI
+├── alembic.ini          # Конфиг Alembic
+├── Dockerfile           # Инструкции для сборки контейнера
+└── requirements.txt     # Зависимости Python
+```
 
 ## Основные endpoints (под `/api/auth`)
 
-- `POST /register` — регистрация.
-- `POST /login` — вход, выдаёт cookies с access/refresh.
-- `POST /refresh` — обновляет access по refresh cookie.
-- `POST /logout` — удаляет cookies и отзывает refresh.
-- `GET /me` — данные пользователя из payload (через KrakenD).
-- `POST /password-reset-request` — запрос на сброс пароля.
-- `POST /password-reset-confirm` — подтверждение сброса.
-- `GET /.well-known/jwks.json` — публичный ключ (JWKS).
+| Метод | Путь | Доступ | Описание |
+|-------|------|:------:|---------|
+| POST | `/register` | public | Регистрация |
+| POST | `/login` | public | Вход (выдаёт JWT cookies) |
+| POST | `/logout` | public | Выход (отзывает refresh) |
+| POST | `/refresh` | public | Обновление access-токена |
+| POST | `/password-reset-request` | public | Запрос сброса пароля |
+| POST | `/password-reset-confirm` | public | Подтверждение сброса пароля |
+| GET | `/me` | 🔒 JWT | Данные текущего пользователя |
+| POST | `/role-request` | 🔒 JWT | Заявка на изменение роли |
+| GET | `/role-requests/` | 🔒 JWT | Список заявок на роль |
+| POST | `/role-requests/{id}/approve` | 🔒 JWT | Одобрить заявку |
+| POST | `/role-requests/{id}/reject` | 🔒 JWT | Отклонить заявку |
+| GET | `/.well-known/jwks.json` | public | Публичный ключ (JWKS) |
 
 ## Реальный logout (refresh revoke)
 
@@ -40,25 +72,17 @@
 
 - Cookies: `access_token`, `refresh_token`.
 - Access TTL задаётся `CONFIG__AUTH__ACCESS_EXPIRE_MIN`.
-- Refresh TTL:
-  - если `CONFIG__AUTH__REFRESH_EXPIRE_MIN` задан, используется он;
-  - иначе `CONFIG__AUTH__REFRESH_EXPIRE_DAYS`.
 
 ## Конфигурация (.env)
 
 Примеры (см. `.env.example`):
 
 - `CONFIG__DB__URL` — PostgreSQL URL.
-- `CONFIG__AUTH__ACCESS_EXPIRE_MIN` — TTL access.
-- `CONFIG__AUTH__REFRESH_EXPIRE_MIN` — TTL refresh в минутах (опционально).
-- `CONFIG__AUTH__REFRESH_EXPIRE_DAYS` — TTL refresh в днях (fallback).
+- `CONFIG__AUTH__ACCESS_EXPIRE_MIN` — TTL access (минуты).
+- `CONFIG__AUTH__REFRESH_EXPIRE_DAYS` — TTL refresh (дни).
 - `CONFIG__REDIS__URL` — Redis URL (revoked refresh tokens).
 - `CONFIG__FRONTEND_URL` — URL фронтенда для reset-ссылок.
 - `CONFIG__RUN__SHOW_DOCS=True` — включить Swagger.
-
-## Swagger
-
-- URL: `http://localhost/api/auth/docs`
 
 ## Запуск (Docker)
 
@@ -68,10 +92,4 @@ make up
 ```
 
 Сервис доступен через Nginx и KrakenD:
-
 - `http://localhost/api/auth/*`
-
-## Замечания
-
-- Endpoint `/me` возвращает данные из payload, без обращения к БД.
-- Для SSR на фронте нужно пробрасывать cookie в запросы.

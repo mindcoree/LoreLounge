@@ -1,68 +1,85 @@
-# Profile service — примечания по MinIO и загрузке медиа
+# Profile Service
 
-Этот документ описывает, как работает загрузка аватаров/фонов в сервисе `profile` и как фронтенд должен взаимодействовать с API.
+Микросервис управления профилями пользователей LoreLounge.
 
-Файлы и места, которые важно знать:
-- Роутер загрузки: [src/api/routers/profile.py](src/api/routers/profile.py) — `POST /api/profile/me/upload`
-- Сервис загрузки: [src/domain/services/media.py](src/domain/services/media.py) — `MediaService.upload_media()`
-- MinIO клиент: [src/infrastructure/storage/minio_client.py](src/infrastructure/storage/minio_client.py)
-- Схема ответа загрузки: [src/api/schemas/profile.py](src/api/schemas/profile.py) — `UploadURLs`
+## Назначение
 
-Ключевая идея
-- Фронтенд должен сначала вызвать один endpoint для загрузки медиа (если есть файлы), получить URL-ы, а затем вызвать `POST /api/profile/me` чтобы создать профиль, передав полученные URL-ы в тело (поля `avatar_url` и `background_url`).
-- KrakenD проксирует JWT и ставит заголовок `X-User-ID`, поэтому сервис получает `guard` (UUID пользователя) и размещает файлы в MinIO по структуре:
+- Создание и редактирование профилей пользователей.
+- Загрузка и хранение аватаров и фоновых изображений (через MinIO).
+- Управление списком игнорируемых пользователей.
+- Просмотр публичных профилей.
 
-  `lorelounge-media/profile/avatar/{user_id}/{filename}`
+## Технологический стек
 
-  `lorelounge-media/profile/background/{user_id}/{filename}`
+- **Ядро**: FastAPI + Pydantic Settings.
+- **Хранилище**: PostgreSQL (данные профилей), MinIO (медиа-файлы).
+- **Брокер**: RabbitMQ (для будущих событий обновления профиля).
 
-. Т.е. файлы группируются по типу и по пользователю.
+## Структура папок
 
-Переменные окружения (см. `.env` в корне сервиса):
+```text
+profile/
+├── src/
+│   ├── api/             # Маршруты, схемы, зависимости и обработчики
+│   │   ├── routers/     # Эндпоинты профиля
+│   │   ├── schemas/     # Pydantic модели
+│   │   └── dependencies/# Зависимости (DI)
+│   ├── config/          # Настройки (DB, MinIO, RabbitMQ)
+│   ├── domain/          # Бизнес-логика
+│   │   ├── services/    # MediaService и др.
+│   │   └── exceptions/  # Кастомные исключения
+│   ├── infrastructure/  # Внешние реализации
+│   │   ├── db/          # PostgreSQL (SQLAlchemy)
+│   │   └── storage/     # Клиент MinIO
+│   └── main.py          # Точка входа FastAPI
+├── Dockerfile           # Инструкции для сборки
+└── requirements.txt     # Зависимости Python
 ```
-PROFILE_CONFIG__MINIO__ENDPOINT=localhost:9000
-PROFILE_CONFIG__MINIO__ACCESS_KEY=admin
-PROFILE_CONFIG__MINIO__SECRET_KEY=SuperSecret123!
-PROFILE_CONFIG__MINIO__USE_SSL=false
-PROFILE_CONFIG__MINIO__BUCKET_NAME=lorelounge-media
-PROFILE_CONFIG__MINIO__BASE_PATH=profile
-```
 
-Примеры HTTP-запросов
+## Основные endpoints (под `/api/profile`)
 
-1) Загрузить файлы (multipart). Возвращает JSON с `avatar_url` и `background_url` (может быть `null`):
+| Метод | Путь | Доступ | Описание |
+|-------|------|:------:|---------|
+| GET | `/{name}` | public | Публичный профиль пользователя |
+| GET | `/me` | 🔒 JWT | Мой профиль |
+| POST | `/me` | 🔒 JWT | Создать профиль |
+| PATCH | `/me` | 🔒 JWT | Обновить профиль |
+| POST | `/me/upload` | 🔒 JWT | Загрузить аватар/фон (MinIO) |
+| GET | `/me/ignored` | 🔒 JWT | Список игнорируемых |
+| POST | `/me/ignored/{id}` | 🔒 JWT | Добавить в игнор |
+| DELETE | `/me/ignored/{id}` | 🔒 JWT | Убрать из игнора |
+
+## Работа с медиа (MinIO)
+
+Файлы загружаются по следующей структуре:
+- Аватары: `lorelounge-media/profile/avatar/{user_id}/{filename}`
+- Фоны: `lorelounge-media/profile/background/{user_id}/{filename}`
+
+### Поток загрузки медиа
+
+1. Фронтенд вызывает `POST /api/profile/me/upload` с `multipart/form-data`.
+2. Получает JSON с `avatar_url` и `background_url`.
+3. Фронтенд вызывает `POST /api/profile/me` (или `PATCH`), передавая полученные URL в теле запроса.
+
+## Конфигурация (.env)
+
+| Переменная | Описание |
+|------------|---------|
+| `PROFILE_CONFIG__DB__POSTGRES_USER` | Пользователь БД |
+| `PROFILE_CONFIG__DB__POSTGRES_PASSWORD` | Пароль БД |
+| `PROFILE_CONFIG__DB__POSTGRES_SERVER` | Хост БД |
+| `PROFILE_CONFIG__DB__POSTGRES_DB` | Имя БД |
+| `PROFILE_CONFIG__MINIO__ENDPOINT` | Адрес MinIO |
+| `PROFILE_CONFIG__MINIO__ACCESS_KEY` | Access Key |
+| `PROFILE_CONFIG__MINIO__SECRET_KEY` | Secret Key |
+| `PROFILE_CONFIG__MINIO__BUCKET_NAME` | Имя бакета |
+
+## Запуск (Docker)
 
 ```bash
-curl -v -X POST 'http://localhost:8000/api/profile/me/upload' \
-  -H 'Cookie: access_token=<token>' \
-  -F 'avatar=@/path/to/avatar.jpg' \
-  -F 'background=@/path/to/background.jpg'
+# из корня проекта
+make up
 ```
 
-Ответ (пример):
-```json
-{
-  "avatar_url": "http://localhost:9000/lorelounge-media/profile/avatar/550e8400-e29b-41d4-a716-446655440000/avatar.jpg",
-  "background_url": "http://localhost:9000/lorelounge-media/profile/background/550e8400-e29b-41d4-a716-446655440000/background.jpg"
-}
-```
-
-2) Создать профиль, если у фронтенда уже есть URL-ы (по результату шага 1):
-
-```bash
-curl -v -X POST 'http://localhost:8000/api/profile/me' \
-  -H 'Content-Type: application/json' \
-  -H 'Cookie: access_token=<token>' \
-  -d '{"name":"myname","bio":"hi","avatar_url":"<avatar_url>","background_url":"<background_url>"}'
-```
-
-Замечания и рекомендации
-- Если фронтенд не передаёт файлы, он может сразу вызвать `POST /api/profile/me` без шага загрузки.
-- Размеры файлов: текущая реализация читает файл в память; это нормально для аватаров/фонов (~до нескольких мегабайт). Для больших файлов нужно изменить потоковую передачу в `minio_client.put_object()`.
-- После изменения Krakend-конфигурации, перезапустите контейнеры gateway:
-
-```bash
-docker compose up -d --force-recreate krakend nginx
-```
-
-Если хотите, могу добавить пример интеграционного теста или curl-скрипт с переменными окружения и автоматизированной проверкой.
+Сервис доступен через Nginx и KrakenD:
+- `http://localhost/api/profile/*`

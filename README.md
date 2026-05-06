@@ -12,11 +12,9 @@
 - [Архитектура](#архитектура)
 - [Сетевая изоляция](#сетевая-изоляция)
 - [Структура проекта](#структура-проекта)
+- [Микросервисы](#микросервисы)
 - [Быстрый старт](#быстрый-старт)
 - [Маршрутизация](#маршрутизация)
-- [API](#api)
-- [KrakenD](#krakend-flexible-configuration)
-- [Переменные окружения](#переменные-окружения)
 - [Лицензия](#лицензия)
 
 ---
@@ -151,27 +149,28 @@ flowchart LR
 
 ```text
 LoreLounge/
-├── docs/                        # Документация (architecture.md и др.)
-├── gateway/
-│   ├── nginx.conf               # Reverse proxy — публичная точка входа
-│   └── krakend/
-│       ├── krakend.tmpl.json    # Главный конфиг (Flexible Configuration)
-│       ├── endpoints/           # Шаблоны эндпоинтов
-│       ├── partials/            # Переиспользуемые блоки (JWT, headers)
-│       └── templates/           # Шаблоны бэкендов
+├── docs/                        # Общая документация
+├── gateway/                     # API Gateway (KrakenD) и Reverse Proxy (Nginx)
 ├── frontend/                    # Next.js приложение
-├── infra/
-│   ├── docker-compose.yml       # Вся инфраструктура
-│   ├── postgres/                # init.sql скрипты для БД
-│   └── scripts/                 # generate-certs.sh, migrate.sh
-├── services/
-│   ├── auth/                    # Аутентификация и авторизация (FastAPI)
-│   ├── profile/                 # Профили пользователей (FastAPI)
-│   ├── notification/            # Отправка уведомлений (FastStream)
+├── infra/                       # Docker Compose, скрипты, конфиги БД
+├── services/                    # Микросервисы
+│   ├── auth/                    # [README](services/auth/README.md) — Auth & Roles (FastAPI)
+│   ├── profile/                 # [README](services/profile/README.md) — User Profiles (FastAPI)
+│   ├── notification/            # [README](services/notification/README.md) — Emails (FastStream)
 │   ├── content/                 # [в разработке] Новеллы и главы
 │   └── comment/                 # [в разработке] Комментарии
-└── Makefile                     # Удобные команды для разработки
+└── Makefile                     # Команды управления проектом
 ```
+
+---
+
+## Микросервисы
+
+Подробную информацию о функционале, API и настройках каждого сервиса можно найти в их внутренних документах:
+
+1.  [**Auth Service**](services/auth/README.md) — Регистрация, вход, JWT (RS256), роли, сброс пароля.
+2.  [**Profile Service**](services/profile/README.md) — Профили, загрузка аватаров (MinIO), черные списки.
+3.  [**Notification Service**](services/notification/README.md) — Отправка email через RabbitMQ.
 
 ---
 
@@ -248,111 +247,6 @@ sequenceDiagram
         K-->>B: 401 Unauthorized
     end
 ```
-
----
-
-## API
-
-### Auth (`/api/auth`)
-
-| Метод | Путь | Доступ | Описание |
-|-------|------|:------:|---------|
-| POST | `/register` | public | Регистрация |
-| POST | `/login` | public | Вход (выдаёт JWT cookies) |
-| POST | `/logout` | public | Выход (отзывает refresh) |
-| POST | `/refresh` | public | Обновление access-токена |
-| POST | `/password-reset-request` | public | Запрос сброса пароля |
-| POST | `/password-reset-confirm` | public | Подтверждение сброса пароля |
-| GET | `/me` | 🔒 JWT | Данные текущего пользователя |
-| POST | `/role-request` | 🔒 JWT | Заявка на изменение роли |
-| GET | `/role-requests/` | 🔒 JWT | Список заявок на роль |
-| POST | `/role-requests/{id}/approve` | 🔒 JWT | Одобрить заявку |
-| POST | `/role-requests/{id}/reject` | 🔒 JWT | Отклонить заявку |
-
-### Profile (`/api/profile`)
-
-| Метод | Путь | Доступ | Описание |
-|-------|------|:------:|---------|
-| GET | `/{name}` | public | Публичный профиль пользователя |
-| GET | `/me` | 🔒 JWT | Мой профиль |
-| POST | `/me` | 🔒 JWT | Создать профиль |
-| PATCH | `/me` | 🔒 JWT | Обновить профиль |
-| GET | `/me/ignored` | 🔒 JWT | Список игнорируемых (`limit`, `offset`) |
-| POST | `/me/ignored/{target_user_id}` | 🔒 JWT | Добавить в игнор |
-| DELETE | `/me/ignored/{target_user_id}` | 🔒 JWT | Убрать из игнора |
-
-**Заметка — поток загрузки медиа**
-
-Новый защищённый маршрут `POST /api/profile/me/upload` принимает `multipart/form-data` с полями `avatar` и/или `background`, загружает файлы в MinIO и возвращает JSON с `avatar_url` и `background_url`. Рекомендуемый фронтенд-поток:
-
-1. Если пользователь передаёт файлы — сначала вызвать `POST /api/profile/me/upload` и получить URL-ы.
-2. Затем вызвать `POST /api/profile/me`, передав в теле полученные `avatar_url`/`background_url` вместе с остальными полями профиля.
-
-Если файлов нет, фронтенд может сразу вызывать `POST /api/profile/me` без шага загрузки.
-
----
-
-## KrakenD (Flexible Configuration)
-
-```text
-gateway/krakend/
-├── krakend.tmpl.json            # Точка входа (FC_ENABLE=1)
-├── endpoints/
-│   ├── auth-public.tmpl         # Публичные эндпоинты auth
-│   ├── auth-protected.tmpl      # Защищённые эндпоинты auth
-│   ├── profile-public.tmpl      # Публичные эндпоинты profile
-│   └── profile-protected.tmpl   # Защищённые эндпоинты profile
-├── partials/
-│   ├── common-headers.json      # Общие заголовки
-│   └── jwt-validator.json       # Настройки JWT (RS256, JWKS)
-└── templates/
-    └── backend.json             # Шаблон бэкенда
-```
-
-Проверка конфигурации:
-
-```bash
-docker run -i --rm \
-  -e FC_ENABLE=1 \
-  -v "$PWD/gateway/krakend:/etc/krakend" \
-  devopsfaith/krakend:2.5 \
-  check -c /etc/krakend/krakend.tmpl.json
-```
-
----
-
-## Переменные окружения
-
-### Frontend
-
-| Переменная | Значение по умолчанию | Описание |
-|------------|----------------------|---------|
-| `LORELOUNGE_API_BASE` | `http://krakend:8080/api` | Внутренний адрес API Gateway |
-| `PORT` | `3000` | Порт Next.js сервера |
-
-### Auth
-
-| Переменная | Описание |
-|------------|---------|
-| `CONFIG__DB__URL` | PostgreSQL connection string |
-| `CONFIG__AUTH__ACCESS_EXPIRE_MIN` | TTL access-токена (минуты) |
-| `CONFIG__AUTH__REFRESH_EXPIRE_DAYS` | TTL refresh-токена (дни) |
-| `CONFIG__REDIS__URL` | Redis (хранение отозванных токенов) |
-| `CONFIG__FRONTEND_URL` | URL фронтенда для ссылок сброса пароля |
-| `RABBITMQ_URL` | AMQP URL брокера |
-
-### Profile
-
-| Переменная | Описание |
-|------------|---------|
-| `PROFILE_CONFIG__DB__*` | Параметры подключения к PostgreSQL |
-| `PROFILE_CONFIG__MINIO__*` | Параметры MinIO (endpoint, keys, bucket) |
-| `RABBITMQ_URL` | AMQP URL брокера |
-
-Полные примеры переменных:
-- [`services/auth/.env.example`](services/auth/.env.example)
-- [`services/profile/.env.example`](services/profile/.env.example)
-- [`infra/docker-compose.yml`](infra/docker-compose.yml)
 
 ---
 
