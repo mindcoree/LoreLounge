@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from config.settings import settings
 from infrastructure.db.db_helper import db_helper
 from api.handlers import setup_exception_handlers
+from api.routers import router as api_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,6 +53,9 @@ app = FastAPI(
 @app.get("/healthz", tags=["Infra"], summary="Проверка работоспособности сервиса")
 async def health_check() -> dict:
     return {"status": "ok", "service": "profile"}
+
+
+app.include_router(api_router)
 
 # Регистрируем обработчики ошибок одной строчкой!
 setup_exception_handlers(app)
