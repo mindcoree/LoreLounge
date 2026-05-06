@@ -21,16 +21,17 @@
 profile/
 ├── src/
 │   ├── api/             # Маршруты, схемы, зависимости и обработчики
-│   │   ├── routers/     # Эндпоинты профиля
-│   │   ├── schemas/     # Pydantic модели
-│   │   └── dependencies/# Зависимости (DI)
-│   ├── config/          # Настройки (DB, MinIO, RabbitMQ)
+│   │   ├── routers/     # profile.py, ignore_list.py
+│   │   ├── schemas/     # profile.py, ignore_list.py, pagination.py
+│   │   ├── dependencies/# auth.py, service.py, session.py
+│   │   └── handlers/    # error_profile.py, error_ignore_list.py
+│   ├── config/          # settings.py, database.py, minio.py, prefixes.py
 │   ├── domain/          # Бизнес-логика
-│   │   ├── services/    # MediaService и др.
-│   │   └── exceptions/  # Кастомные исключения
+│   │   ├── services/    # profile.py, media.py, ignore_list.py
+│   │   └── exceptions/  # profile.py, ignore_list.py, base.py
 │   ├── infrastructure/  # Внешние реализации
-│   │   ├── db/          # PostgreSQL (SQLAlchemy)
-│   │   └── storage/     # Клиент MinIO
+│   │   ├── db/          # models/, repositories/, db_helper.py, alembic.ini
+│   │   └── storage/     # minio_client.py
 │   └── main.py          # Точка входа FastAPI
 ├── Dockerfile           # Инструкции для сборки
 └── requirements.txt     # Зависимости Python
@@ -42,7 +43,7 @@ profile/
 |-------|------|:------:|---------|
 | GET | `/{name}` | public | Публичный профиль пользователя |
 | GET | `/me` | 🔒 JWT | Мой профиль |
-| POST | `/me` | 🔒 JWT | Создать профиль |
+| PUT | `/me` | 🔒 JWT | Создать/Заменить профиль |
 | PATCH | `/me` | 🔒 JWT | Обновить профиль |
 | POST | `/me/upload` | 🔒 JWT | Загрузить аватар/фон (MinIO) |
 | GET | `/me/ignored` | 🔒 JWT | Список игнорируемых |
@@ -59,7 +60,7 @@ profile/
 
 1. Фронтенд вызывает `POST /api/profile/me/upload` с `multipart/form-data`.
 2. Получает JSON с `avatar_url` и `background_url`.
-3. Фронтенд вызывает `POST /api/profile/me` (или `PATCH`), передавая полученные URL в теле запроса.
+3. Фронтенд вызывает `PUT /api/profile/me` (или `PATCH`), передавая полученные URL в теле запроса.
 
 ## Конфигурация (.env)
 

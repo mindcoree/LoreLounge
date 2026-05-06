@@ -18,13 +18,13 @@
 ```text
 notification/
 ├── src/
-│   ├── core/            # Конфигурация приложения
-│   ├── domain/          # Бизнес-логика и схемы сообщений
-│   │   └── notification/ # Схемы (PasswordResetNotification и др.)
+│   ├── core/            # config.py
+│   ├── domain/          # Схемы сообщений
+│   │   └── notification/ # schemas.py (PasswordResetNotification)
 │   ├── infrastructure/  # Внешние реализации
-│   │   ├── broker/      # Настройка RabbitMQ
-│   │   └── email/       # Логика отправки SMTP
-│   └── main.py          # Точка входа (обработчики очеререй)
+│   │   ├── broker/      # rabbitmq.py
+│   │   └── email/       # smtp.py
+│   └── main.py          # Точка входа и обработчики (FastStream)
 ├── Dockerfile           # Инструкции для сборки
 └── requirements.txt     # Зависимости Python
 ```

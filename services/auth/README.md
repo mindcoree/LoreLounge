@@ -28,16 +28,23 @@ auth/
 ├── migrations/          # Alembic миграции
 ├── src/
 │   ├── api/             # Маршруты и обработчики исключений
-│   │   └── router/      # Группировка эндпоинтов
-│   ├── core/            # Конфигурация, безопасность (JWT logic), типы
+│   │   ├── router/      # Группировка эндпоинтов
+│   │   │   ├── auth/    # login, register, refresh, logout
+│   │   │   ├── password/# password reset
+│   │   │   └── roles/   # role requests
+│   │   └── exception_handlers.py
+│   ├── core/            # Конфигурация, безопасность (JWT logic)
+│   │   ├── config.py
+│   │   ├── security.py
+│   │   └── types.py
 │   ├── domain/          # Бизнес-логика и сущности (Clean Architecture)
-│   │   ├── common/      # Общие схемы и сущности
-│   │   ├── entity/      # Модели БД и схемы Pydantic
-│   │   └── role_requests/ # Логика заявок на роли
+│   │   ├── entity/      # services.py, schemas.py, repository.py (интерфейс)
+│   │   ├── role_requests/ # services.py, schemas.py, repository.py
+│   │   └── common/      # interfaces.py, enums.py, exceptions.py
 │   ├── infrastructure/  # Внешние зависимости
-│   │   ├── broker/      # Интеграция с RabbitMQ
-│   │   ├── cache/       # Работа с Redis
-│   │   └── db/          # Сессии и настройки PostgreSQL
+│   │   ├── broker/      # rabbitmq.py
+│   │   ├── cache/       # redis.py
+│   │   └── db/          # models.py, session.py, repositories/
 │   └── main.py          # Точка входа FastAPI
 ├── alembic.ini          # Конфиг Alembic
 ├── Dockerfile           # Инструкции для сборки контейнера
