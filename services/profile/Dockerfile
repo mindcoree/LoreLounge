@@ -15,5 +15,10 @@ COPY . .
 
 EXPOSE 8000
 
+
+RUN chmod +x prestart.sh
+
+ENTRYPOINT ["./prestart.sh"]
+
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 

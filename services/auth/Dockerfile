@@ -15,9 +15,15 @@ COPY src/      ./src/
 COPY migrations/  ./migrations/
 COPY alembic.ini .
 
+# Copy startup script and make it executable
+COPY prestart.sh .
+
 # Папка для сертификатов (реальные ключи прокидываются через volume)
 RUN mkdir -p /app/certs
 
 EXPOSE 8000
 
+RUN chmod +x prestart.sh
+
+ENTRYPOINT ["./prestart.sh"]
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
