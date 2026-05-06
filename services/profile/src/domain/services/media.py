@@ -1,4 +1,5 @@
 from uuid import UUID
+import asyncio
 from typing import Optional
 from fastapi import UploadFile
 
@@ -30,12 +31,18 @@ class MediaService:
         avatar_url: Optional[str] = None
         background_url: Optional[str] = None
 
-        if avatar is not None:
-            avatar_url = await self.upload_avatar(user_id, avatar)
-
-        if background is not None:
-            background_url = await self.upload_background(user_id, background)
-
+        if avatar and background:
+            # If both files are provided, we can upload them concurrently for better performance
+            avatar_url, background_url = await asyncio.gather(
+                self.upload_avatar(user_id, avatar),
+                self.upload_background(user_id, background),
+            )
+        else:
+            if avatar:
+                avatar_url = await self.upload_avatar(user_id, avatar)
+            if background:
+                background_url = await self.upload_background(user_id, background)
+                
         return {
             "avatar_url": avatar_url,
             "background_url": background_url,
