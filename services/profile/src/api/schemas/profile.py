@@ -53,3 +53,10 @@ class ProfileResponse(BaseModel):
     updated_at: datetime = Field(..., description="The timestamp when the profile was last updated.")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UploadURLs(BaseModel):
+    avatar_url: Optional[str] = Field(None, description="Uploaded avatar URL")
+    background_url: Optional[str] = Field(None, description="Uploaded background URL")
+
+    model_config = ConfigDict(from_attributes=True)

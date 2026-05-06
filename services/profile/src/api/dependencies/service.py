@@ -6,6 +6,7 @@ from .session import SessionDep
 
 from domain.services.profile import ProfileService
 from domain.services.ignore_list import IgnoreListService
+from domain.services.media import MediaService
 
 
 async def get_profile_service(
@@ -23,3 +24,10 @@ async def get_ignore_list_service(
     return IgnoreListService(session=session)
 
 IgnoreListServiceDep = Annotated[IgnoreListService, Depends(get_ignore_list_service)]
+
+
+async def get_media_service() -> MediaService:
+    return MediaService()
+
+
+MediaServiceDep = Annotated[MediaService, Depends(get_media_service)]
