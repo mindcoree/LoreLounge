@@ -1,9 +1,11 @@
 from uuid import UUID
+from typing import Annotated
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Query
 
 from dependencies import IgnoreListServiceDep, GuardDep
 from schemas.ignore_list import IgnoreUserResponse
+from schemas.pagination import Pagination 
 
 router = APIRouter(tags=["Ignore List endpoints"]) # api/profile/
 
@@ -27,9 +29,21 @@ router = APIRouter(tags=["Ignore List endpoints"]) # api/profile/
 async def get_my_ignore_list(
     guard: GuardDep,
     ignore_list_service: IgnoreListServiceDep,
+    pagination: Annotated[Pagination, Query()],
 ):
     """Get the list of users that the current user has ignored"""
-    pass
+    ignored_users = await ignore_list_service.get_ignore_list(
+        user_id=guard,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
+    return [
+        IgnoreUserResponse(
+            ignored_user_id=ignore_entry.ignored_user_id,
+            ignored_profile=ignore_entry.ignored,
+        )
+        for ignore_entry in ignored_users
+    ]
 
 
 @router.post(
@@ -51,7 +65,11 @@ async def ignore_user(
     ignore_list_service: IgnoreListServiceDep,
 ):
     """Add a user to the current user's ignore list"""
-    pass
+    await ignore_list_service.add_ignored_user(
+        user_id=guard,
+        ignored_user_id=target_user_id,
+    )
+    return {"detail": "User successfully added to ignore list"}
 
 
 @router.delete(
@@ -73,4 +91,7 @@ async def remove_ignored_user(
     ignore_list_service: IgnoreListServiceDep,
 ):
     """Remove a user from the current user's ignore list"""
-    pass
+    await ignore_list_service.remove_ignored_user(
+        user_id=guard,
+        ignored_user_id=target_user_id,
+    )

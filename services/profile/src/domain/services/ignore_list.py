@@ -50,9 +50,13 @@ class IgnoreListService:
         # Commit the transaction
         await self.session.commit()
 
-    async def get_ignore_list(self, user_id: UUID) -> list:
+    async def get_ignore_list(self, user_id: UUID, limit: int, offset: int) -> list:
         """Get all users ignored by the given user"""
-        return await self.ignore_list_repo.get_ignored_users(user_id)
+        return await self.ignore_list_repo.get_ignored_users(
+            user_id=user_id,
+            limit=limit,
+            offset=offset,
+        )
 
     async def is_user_ignored(self, user_id: UUID, ignored_user_id: UUID) -> bool:
         """Check if a user is in the ignore list"""

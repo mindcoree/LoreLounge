@@ -10,7 +10,7 @@ class IgnoreListRepository(BaseRepository[IgnoreList]):
     def __init__(self, session: AsyncSession):
         super().__init__(model=IgnoreList, session=session)
 
-    async def get_ignored_users(self, user_id: UUID) -> list[IgnoreList]:
+    async def get_ignored_users(self, user_id: UUID, limit: int, offset: int) -> list[IgnoreList]:
         """
         Get all users ignored by the given user.
         selectinload fetches the ignored profile in the same query,
@@ -20,6 +20,8 @@ class IgnoreListRepository(BaseRepository[IgnoreList]):
             select(IgnoreList)
             .where(IgnoreList.user_id == user_id)
             .options(selectinload(IgnoreList.ignored))  # Eagerly load 'ignored' relation
+            .limit(limit)
+            .offset(offset)
         )
         result = await self.session.execute(query)
         return list(result.scalars().all())
