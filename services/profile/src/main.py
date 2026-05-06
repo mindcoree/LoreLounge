@@ -2,7 +2,7 @@
 Точка входа profile.
 
 Запуск:
-    uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    python src/main.py
 """
 
 import logging
@@ -22,9 +22,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ── Lifespan ──────────────────────────────────────────────────────────────────
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Управление жизненным циклом: создаём пул при старте, закрываем при остановке."""
@@ -34,39 +31,29 @@ async def lifespan(app: FastAPI):
 
     logger.info("🛑 profile останавливается, закрываем пул соединений…")
     await db_helper.dispose()
- 
-
-# ── Приложение ────────────────────────────────────────────────────────────────
-app = FastAPI(
-    title="LoreLounge — Profile Service",
-    description="Микросервис профилей для платформы LoreLounge.",
-    version="0.1.0",
-    lifespan=lifespan,
-    # Путь к Swagger станет /api/profile/docs (если включен)
-    docs_url="/profile/docs" if settings.run.show_docs else None,
-    # Настройки для "чистоты" Swagger
-    swagger_ui_parameters={"defaultModelsExpandDepth": -1} 
-)   
 
 
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="LoreLounge — Profile Service",
+        description="Микросервис профилей для платформы LoreLounge.",
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url="/profile/docs" if settings.run.show_docs else None,
+        swagger_ui_parameters={"defaultModelsExpandDepth": -1},
+    )
 
-@app.get("/healthz", tags=["Infra"], summary="Проверка работоспособности сервиса")
-async def health_check() -> dict:
-    return {"status": "ok", "service": "profile"}
+    @app.get("/healthz", tags=["Infra"], summary="Проверка работоспособности сервиса")
+    async def health_check() -> dict:
+        return {"status": "ok", "service": "profile"}
+
+    app.include_router(api_router)
+    setup_exception_handlers(app)
+    return app
 
 
-app.include_router(api_router)
-
-# Регистрируем обработчики ошибок одной строчкой!
-setup_exception_handlers(app)
-
-
-
+app = create_app()
 
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host=settings.run.host,
-        port=settings.run.port,
-    )
+    uvicorn.run(app, host=settings.run.host, port=settings.run.port)
