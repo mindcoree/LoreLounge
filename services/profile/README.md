@@ -20,21 +20,29 @@
 ```text
 profile/
 ├── src/
-│   ├── api/             # Маршруты, схемы, зависимости и обработчики
-│   │   ├── routers/     # profile.py, ignore_list.py
-│   │   ├── schemas/     # profile.py, ignore_list.py, pagination.py
-│   │   ├── dependencies/# auth.py, service.py, session.py
-│   │   └── handlers/    # error_profile.py, error_ignore_list.py
-│   ├── config/          # settings.py, database.py, minio.py, prefixes.py
-│   ├── domain/          # Бизнес-логика
-│   │   ├── services/    # profile.py, media.py, ignore_list.py
-│   │   └── exceptions/  # profile.py, ignore_list.py, base.py
-│   ├── infrastructure/  # Внешние реализации
-│   │   ├── db/          # models/, repositories/, db_helper.py, alembic.ini
-│   │   └── storage/     # minio_client.py
-│   └── main.py          # Точка входа FastAPI
-├── Dockerfile           # Инструкции для сборки
-└── requirements.txt     # Зависимости Python
+│   ├── api/                   # Маршруты, схемы, зависимости и обработчики
+│   │   ├── routers/           # profile.py, ignore_list.py
+│   │   ├── schemas/           # profile.py, ignore_list.py, pagination.py
+│   │   ├── dependencies/      # auth.py, service.py, session.py
+│   │   └── handlers/          # error_profile.py, error_ignore_list.py
+│   ├── config/                # settings.py, database.py, minio.py, prefixes.py
+│   ├── domain/                # Бизнес-логика
+│   │   ├── services/          # profile.py, media.py, ignore_list.py
+│   │   └── exceptions/        # profile.py, ignore_list.py, base.py
+│   ├── infrastructure/        # Внешние реализации
+│   │   ├── db/                # SQLAlchemy (session, asyncpg)
+│   │   │   ├── migrations/    # alembic.ini, env.py, versions/
+│   │   │   ├── models/        # base.py, ignore_list.py, profile.py
+│   │   │   ├── repositories/  # base.py, ignore_list.py, profile.py
+│   │   │   ├── types.py       # mixins.py, model_type.py
+│   │   │   ├── db_helper.py   # helper for db and session
+│   │   │   └── alembic.ini    # configuration Alembic
+│   │   └── storage/           # minio_client.py
+│   └── main.py                # Точка входа FastAPI
+├── Dockerfile                 # Инструкции для сборки
+├── prestart.sh                # скрипт для запуска alembic  
+├── Makefile                   # Makefile для удобной работы
+└── requirements.txt           # Зависимости Python
 ```
 
 ## Основные endpoints (под `/api/profile`)
