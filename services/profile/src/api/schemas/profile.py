@@ -2,45 +2,39 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from uuid import UUID
 
-
 class Profile(BaseModel):
     name: str = Field(
-        ..., max_length=100, description="Уникальный никнейм пользователя"
+        ..., max_length=100, description="Unique user nickname"
     )
     bio: Optional[str] = Field(
-        None, max_length=500, description="Краткая биография пользователя"
+        None, max_length=500, description="Short user biography"
     )
-    avatar_url: Optional[str] = Field(None, description="URL аватара пользователя")
-    backgroud_url: Optional[str] = Field(
-        None, description="URL фона профиля пользователя"
+    avatar_url: Optional[str] = Field(
+        None, description="User avatar URL"
+    )
+    background_url: Optional[str] = Field(
+        None, description="User profile background URL"
     )
 
 
 class ProfileUpdate(BaseModel):
     name: Optional[str] = Field(
-        None, max_length=100, description="Уникальный никнейм пользователя"
+        None, max_length=100, description="Unique user nickname"
     )
     bio: Optional[str] = Field(
-        None, max_length=500, description="Краткая биография пользователя"
+        None, max_length=500, description="Short user biography"
     )
-    avatar_url: Optional[str] = Field(None, description="URL аватара пользователя")
-    backgroud_url: Optional[str] = Field(
-        None, description="URL фона профиля пользователя"
+    avatar_url: Optional[str] = Field(
+        None, description="User avatar URL"
+    )
+    background_url: Optional[str] = Field(
+        None, description="User profile background URL"
     )
 
 
 class ProfileResponse(BaseModel):
-    user_id: UUID = Field(..., description="Уникальный идентификатор пользователя")
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IgnoreUserResponse(BaseModel):
-    ignoreed_user_id: UUID = Field(
-        ..., description="Уникальный идентификатор игнорируемого пользователя"
-    )
-    ignored_profile: Optional[ProfileResponse] = Field(
-        None, description="Профиль игнорируемого пользователя"
+    user_id: UUID = Field(
+        ..., description="Unique user identifier"
     )
 
     model_config = ConfigDict(from_attributes=True)
