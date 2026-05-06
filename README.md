@@ -281,6 +281,15 @@ sequenceDiagram
 | POST | `/me/ignored/{target_user_id}` | 🔒 JWT | Добавить в игнор |
 | DELETE | `/me/ignored/{target_user_id}` | 🔒 JWT | Убрать из игнора |
 
+**Заметка — поток загрузки медиа**
+
+Новый защищённый маршрут `POST /api/profile/me/upload` принимает `multipart/form-data` с полями `avatar` и/или `background`, загружает файлы в MinIO и возвращает JSON с `avatar_url` и `background_url`. Рекомендуемый фронтенд-поток:
+
+1. Если пользователь передаёт файлы — сначала вызвать `POST /api/profile/me/upload` и получить URL-ы.
+2. Затем вызвать `POST /api/profile/me`, передав в теле полученные `avatar_url`/`background_url` вместе с остальными полями профиля.
+
+Если файлов нет, фронтенд может сразу вызывать `POST /api/profile/me` без шага загрузки.
+
 ---
 
 ## KrakenD (Flexible Configuration)
