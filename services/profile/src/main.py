@@ -1,10 +1,3 @@
-"""
-Точка входа profile.
-
-Запуск:
-    python src/main.py
-"""
-
 import logging
 from contextlib import asynccontextmanager
 import uvicorn
@@ -24,26 +17,26 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Управление жизненным циклом: создаём пул при старте, закрываем при остановке."""
-    logger.info("🚀profile запускается…")
+    """Lifecycle management: initialize resources on startup, clean up on shutdown."""
+    logger.info("🚀 Profile service is starting...")
 
     yield
 
-    logger.info("🛑 profile останавливается, закрываем пул соединений…")
+    logger.info("🛑 Profile service is shutting down, closing connection pool...")
     await db_helper.dispose()
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="LoreLounge — Profile Service",
-        description="Микросервис профилей для платформы LoreLounge.",
+        description="Profile microservice for the LoreLounge platform.",
         version="0.1.0",
         lifespan=lifespan,
         docs_url="/profile/docs" if settings.run.show_docs else None,
         swagger_ui_parameters={"defaultModelsExpandDepth": -1},
     )
 
-    @app.get("/healthz", tags=["Infra"], summary="Проверка работоспособности сервиса")
+    @app.get("/healthz", tags=["Infra"], summary="Service health check")
     async def health_check() -> dict:
         return {"status": "ok", "service": "profile"}
 
