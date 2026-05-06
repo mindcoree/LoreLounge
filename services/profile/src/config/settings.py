@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .database import DatabaseSettings
 from .prefixes import ApiPrefix
-
+from .minio import MinioSettings
 
 BASE_SERVICE_DIR = Path(__file__).resolve().parents[2]
 
@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     run: RunSettings = Field(default_factory=RunSettings)
     api: ApiPrefix = Field(default_factory=ApiPrefix)
     db: DatabaseSettings = Field(default_factory=cast(Any, DatabaseSettings))
+    minio: MinioSettings = Field(default_factory=cast(Any, MinioSettings))
 
 
 settings = Settings()

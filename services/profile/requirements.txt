@@ -5,7 +5,9 @@ uvicorn[standard]
 # ─── Database ─────────────────────────────────────────────────────────────────
 sqlalchemy==2.0.49
 asyncpg==0.31.0
+psycopg2-binary==2.9.10
 alembic==1.18.4
+greenlet==3.2.4
 
 # ─── Pydantic / Config ────────────────────────────────────────────────────────
 pydantic==2.13.3
