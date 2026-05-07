@@ -1,7 +1,8 @@
+from typing import Optional
 
 from fastapi import APIRouter, File, UploadFile, status
-from typing import Optional
-from schemas.profile import UploadURLs
+
+from api.schemas.profile import UploadURLs
 from dependencies import MediaServiceDep,GuardDep
 
 
