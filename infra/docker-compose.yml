@@ -76,9 +76,7 @@ services:
         condition: service_healthy
     env_file:
       - ../services/notification/.env
-    environment:
-      <<: *minio-common-env
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
+      - ../services/notification/.env.docker
 
   # ════════════════════════════════════════════════════════════════════
   #  AUTH SERVICE + его личная БД
@@ -144,16 +142,8 @@ services:
       rabbitmq:
         condition: service_healthy
     env_file:
-      - ../services/auth/.env # app-уровень: JWT, SMTP, FRONTEND_URL
-    environment:
-      <<: *minio-common-env
-      # Переопределяем только то, что зависит от Docker-сети:
-      # docker hostname postgres_auth недоступен снаружи контейнера
-      CONFIG__DB__URL: postgresql+asyncpg://${AUTH_DB_USER:-auth_admin}:${AUTH_DB_PASSWORD:-auth_secret}@postgres_auth:5432/${AUTH_DB_NAME:-lorelounge_auth}
-      CONFIG__DB__ECHO: "false"
-      CONFIG__DB__POOL_SIZE: "20"
-      CONFIG__DB__MAX_OVERFLOW: "10"
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
+      - ../services/auth/.env
+      - ../services/auth/.env.docker
     volumes:
       - ../services/auth/certs:/app/certs:ro
     healthcheck:
@@ -201,32 +191,15 @@ services:
     networks:
       - lorelounge_net
       - profile_db_net
-      - broker_net
     depends_on:
       postgres_profile:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
       minio:
         condition: service_started
     env_file:
-      - ../services/profile/.env 
-    environment:
-      <<: *minio-common-env
-      PROFILE_CONFIG__DB__POSTGRES_USER: ${PROFILE_DB_USER:-profile_admin}
-      PROFILE_CONFIG__DB__POSTGRES_PASSWORD: ${PROFILE_DB_PASSWORD:-profile_secret}
-      PROFILE_CONFIG__DB__POSTGRES_SERVER: postgres_profile
-      PROFILE_CONFIG__DB__POSTGRES_PORT: 5432
-      PROFILE_CONFIG__DB__POSTGRES_DB: ${PROFILE_DB_NAME:-lorelounge_profile}
-      PROFILE_CONFIG__MINIO__ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
-      PROFILE_CONFIG__MINIO__ACCESS_KEY: ${MINIO_ACCESS_KEY:-admin}
-      PROFILE_CONFIG__MINIO__SECRET_KEY: ${MINIO_SECRET_KEY:-SuperSecret123!}
-      PROFILE_CONFIG__MINIO__USE_SSL: ${MINIO_USE_SSL:-false}
-      PROFILE_CONFIG__MINIO__BUCKET_NAME: ${MINIO_BUCKET_PROFILE:-lorelounge-media}
-      PROFILE_CONFIG__MINIO__BASE_PATH: ${MINIO_PREFIX_PROFILE:-profile}
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
+      - ../services/profile/.env
+      - ../services/profile/.env.docker
     healthcheck:
-      # Эндпоинт /healthz у вас уже прописан в src/main.py
       test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')\"" ]
       interval: 15s
       timeout: 5s

@@ -1,15 +1,17 @@
 """
 Конфигурация auth через pydantic-settings.
 
-Все параметры читаются из env-переменных с префиксом CONFIG__ и
-разделителем __ для вложенных моделей (например CONFIG__DB__URL).
+Все параметры читаются из env-переменных с префиксом AUTH__ и
+разделителем __ для вложенных моделей (например AUTH__DB__URL).
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, cast
 
-from pydantic import BaseModel, PostgresDsn
+from pydantic import BaseModel, Field, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from .rabbitmq import RabbitmqConfig
 
 
 BASE_SERVICE_DIR = Path(__file__).parent.parent.parent
@@ -55,7 +57,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_nested_delimiter="__",
-        env_prefix="CONFIG__",
+        env_prefix="AUTH__",
         # Ищем .env в папке сервиса (services/auth/),
         # а не в CWD — чтобы работало при запуске alembic из любой папки
         env_file=str(BASE_SERVICE_DIR / ".env"),
@@ -67,6 +69,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig
     auth: AuthJWT = AuthJWT()
     redis: RedisConfig = RedisConfig()
+    rabbitmq: RabbitmqConfig = RabbitmqConfig()
 
     # URL фронтенда для формирования ссылок (password-reset и т.д.)
     frontend_url: str = "http://localhost:3000"

@@ -7,6 +7,7 @@
 # (.env.example — НЕ игнорируем, шаблон должен быть в git)
 # .env.example — НЕ игнорируем (шаблон должен быть в git)
 !.env.example
+!.env.docker
 *.pem         # RSA-ключи для JWT
 credentials.json
 
