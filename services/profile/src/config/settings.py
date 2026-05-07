@@ -19,7 +19,7 @@ BASE_SERVICE_DIR = Path(__file__).resolve().parents[2]
 
 
 class RunSettings(BaseModel):
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"
     port: int = 8000
     show_docs: bool = False 
 

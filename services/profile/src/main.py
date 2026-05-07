@@ -32,7 +32,9 @@ def create_app() -> FastAPI:
         description="Profile microservice for the LoreLounge platform.",
         version="0.1.0",
         lifespan=lifespan,
+        root_path="/api",
         docs_url="/profile/docs" if settings.run.show_docs else None,
+        openapi_url="/profile/openapi.json" if settings.run.show_docs else None,
         swagger_ui_parameters={"defaultModelsExpandDepth": -1},
     )
 
