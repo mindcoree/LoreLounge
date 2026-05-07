@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, File, UploadFile, status
 
 from api.schemas.profile import UploadURLs
-from dependencies import MediaServiceDep,GuardDep
+from api.dependencies import MediaServiceDep,GuardDep
 
 
 
