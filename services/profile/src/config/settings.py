@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .database import DatabaseSettings
 from .prefixes import ApiProfilePrefix
-from .minio import MinioSettings
+from .storage import MinioSettings, StorageSettings
 
 BASE_SERVICE_DIR = Path(__file__).resolve().parents[2]
 
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_nested_delimiter="__",
-        env_prefix="PROFILE_CONFIG__",
+        env_prefix="PROFILE__",
         env_file=str(BASE_SERVICE_DIR / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     api: ApiProfilePrefix = Field(default_factory=ApiProfilePrefix)
     db: DatabaseSettings = Field(default_factory=cast(Any, DatabaseSettings))
     minio: MinioSettings = Field(default_factory=cast(Any, MinioSettings))
+    storage: StorageSettings = Field(default_factory=StorageSettings)
 
 
 settings = Settings()

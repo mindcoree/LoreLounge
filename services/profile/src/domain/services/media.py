@@ -3,11 +3,29 @@ import asyncio
 from typing import Optional
 from fastapi import UploadFile
 
+from config.settings import settings
 from infrastructure.storage.minio_client import upload_file_to_minio
+from domain.exceptions.media import MediaFormatError, MediaSizeError
 
 
 class MediaService:
     """Service for handling media uploads to MinIO."""
+
+    @staticmethod
+    async def validate_image(upload: UploadFile) -> None:
+        """Validate image file before upload.
+        
+        Raises:
+            MediaFormatError: If MIME type is not allowed.
+            MediaSizeError: If file size exceeds the limit.
+        """
+        # 1. Check MIME type
+        if not upload.content_type or upload.content_type not in settings.storage.allowed_mime_types:
+            raise MediaFormatError(upload.content_type or "unknown")
+        
+        # 2. Check file size
+        if upload.size and upload.size > settings.storage.max_file_size_bytes:
+            raise MediaSizeError(settings.storage.max_file_size_mb)
 
     async def upload_avatar(
         self,
@@ -15,6 +33,7 @@ class MediaService:
         avatar: UploadFile,
     ) -> str:
         """Upload avatar to MinIO and return URL."""
+        await self.validate_image(avatar)
         new_url = await upload_file_to_minio(user_id, avatar, file_type="avatar")
         return new_url
 
@@ -24,6 +43,7 @@ class MediaService:
         background: UploadFile,
     ) -> str:
         """Upload background to MinIO and return URL."""
+        await self.validate_image(background)
         new_url = await upload_file_to_minio(user_id, background, file_type="background")
         return new_url
 
