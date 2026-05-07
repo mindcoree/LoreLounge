@@ -9,13 +9,23 @@ from infrastructure.storage.minio_client import upload_file_to_minio
 class MediaService:
     """Service for handling media uploads to MinIO."""
 
-    async def upload_avatar(self, user_id: UUID, avatar: UploadFile) -> str:
+    async def upload_avatar(
+        self,
+        user_id: UUID,
+        avatar: UploadFile,
+    ) -> str:
         """Upload avatar to MinIO and return URL."""
-        return await upload_file_to_minio(user_id, avatar, file_type="avatar")
+        new_url = await upload_file_to_minio(user_id, avatar, file_type="avatar")
+        return new_url
 
-    async def upload_background(self, user_id: UUID, background: UploadFile) -> str:
+    async def upload_background(
+        self,
+        user_id: UUID,
+        background: UploadFile,
+    ) -> str:
         """Upload background to MinIO and return URL."""
-        return await upload_file_to_minio(user_id, background, file_type="background")
+        new_url = await upload_file_to_minio(user_id, background, file_type="background")
+        return new_url
 
     async def upload_media(
         self,

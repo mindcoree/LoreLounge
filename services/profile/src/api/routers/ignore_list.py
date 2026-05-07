@@ -8,7 +8,7 @@ from api.schemas.ignore_list import IgnoreListPageResponse, IgnoreUserResponse
 from api.schemas.profile import ProfileResponse
 from api.schemas.pagination import Pagination
 
-router = APIRouter(tags=["Ignore List endpoints"]) # api/profile/
+router = APIRouter(tags=["Ignore List endpoints"]) # /profile/
 
 
 # ══════════════════════════════════════════
