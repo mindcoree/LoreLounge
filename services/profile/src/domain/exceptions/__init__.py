@@ -1,5 +1,6 @@
 from .base import DomainError
 from .profile import ProfileNotFoundError, ProfileAlreadyExistsError
+from .media import MediaFormatError, MediaSizeError
 from .ignore_list import (
     SelfIgnoreError,
     UserAlreadyIgnoredError,
@@ -13,4 +14,6 @@ __all__ = [
     "SelfIgnoreError",
     "UserAlreadyIgnoredError",
     "UserNotInIgnoreListError",
+    "MediaFormatError",
+    "MediaSizeError",
 ]
