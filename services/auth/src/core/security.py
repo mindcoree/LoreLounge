@@ -13,6 +13,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone, timedelta
 from functools import lru_cache
+from typing import Literal
 from uuid import uuid4
 
 import bcrypt
@@ -219,7 +220,7 @@ async def set_token_cookie(
     value: str,
     max_age: int,
     httponly: bool = True,
-    samesite: str = "lax",
+    samesite: Literal["lax", "strict", "none"] | None = "lax",
     secure: bool = COOKIE_SECURE,
 ) -> None:
     """Устанавливает JWT в http-only cookie."""
