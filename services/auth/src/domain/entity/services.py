@@ -19,6 +19,7 @@ from core.types import TOKEN_TYPE_FIELD, REFRESH_TOKEN_TYPE, JTI_FIELD
 from domain.common.enums import Role
 from domain.entity.repository import AbstractAuthRepository
 from domain.common.interfaces import AbstractMessageBroker
+from core.types import ACCOUNT_DELETION_QUEUE
 from domain.role_requests.repository import RoleRequestRepository
 from redis.asyncio import Redis
 from domain.common.exceptions import (
@@ -41,6 +42,7 @@ from domain.entity.schemas import (
     PasswordResetResponse,
     DomainAuthEntity,
     PasswordResetNotification
+    , AccountDeletionNotification
 )
 
 logger = logging.getLogger(__name__)
@@ -241,3 +243,18 @@ class AuthServices:
 
     async def get_entity_by_id(self, entity_id: UUID) -> DomainAuthEntity | None:
         return await self.repo.get_auth_entity_by_id(entity_id)
+
+    async def delete_account(self, entity_id: UUID) -> None:
+        entity = await self.repo.get_auth_entity_by_id(entity_id)
+        if not entity:
+            raise UserNotFoundError("Пользователь не найден")
+
+        if self.role_request_repo:
+            await self.role_request_repo.delete_by_entity_id(entity_id)
+
+        await self.repo.delete_reset_tokens_by_entity_id(entity_id)
+
+        message = AccountDeletionNotification(user_id=entity_id)
+        await self.message_broker.publish(message, queue=ACCOUNT_DELETION_QUEUE)
+
+        await self.repo.delete_auth_entity(entity_id)

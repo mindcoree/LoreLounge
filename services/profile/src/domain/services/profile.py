@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.schemas.profile import ProfileCreate, ProfileUpdate
 from domain.exceptions import ProfileAlreadyExistsError, ProfileNotFoundError
 from infrastructure.db.repositories.profile import ProfileRepository
+from infrastructure.storage.minio_client import delete_user_media_from_minio
 
 class ProfileService:
     def __init__(self, session: AsyncSession):
@@ -30,6 +31,8 @@ class ProfileService:
             bio=profile_data.bio,
             avatar_url=profile_data.avatar_url,
             background_url=profile_data.background_url,
+            birth_date=profile_data.birth_date,
+            gender=profile_data.gender,
         )
         
         # 4. Commit the transaction
@@ -48,6 +51,20 @@ class ProfileService:
         if not profile:
             raise ProfileNotFoundError(name)
         return profile
+
+
+    async def delete_my_profile(self, user_id: UUID) -> bool:
+        profile = await self.profile_repo.get_by_user_id(user_id)
+        if not profile:
+            return False
+
+        await self.session.delete(profile)
+        await self.session.commit()
+        return True
+
+    async def delete_account_data(self, user_id: UUID) -> bool:
+        await delete_user_media_from_minio(user_id)
+        return await self.delete_my_profile(user_id)
     
 
     async def update_my_profile(self, user_id: UUID, update_data: ProfileUpdate):

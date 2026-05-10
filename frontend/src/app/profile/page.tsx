@@ -164,7 +164,10 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex items-center gap-3 self-start">
-              <button className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition-colors hover:bg-white/10">
+              <button
+                onClick={() => router.push("/profile/settings")}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition-colors hover:bg-white/10"
+              >
                 <Settings size={16} />
                 Настройки
               </button>

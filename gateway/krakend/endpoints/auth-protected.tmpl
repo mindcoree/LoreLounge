@@ -25,6 +25,32 @@
     ]
   },
   {
+    "endpoint": "/api/auth/me",
+    "method": "DELETE",
+    "output_encoding": "no-op",
+    "input_headers": ["Cookie", "x-user-id", "x-user-role", "x-user-email"],
+    "extra_config": {
+      "auth/validator": {
+        "alg": "RS256",
+        "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json",
+        "disable_jwk_security": true,
+        "cache": true,
+        "cookie_name": "access_token",
+        "propagate_claims": [
+          ["sub", "x-user-id"],
+          ["role", "x-user-role"],
+          ["email", "x-user-email"]
+        ]
+      }
+    },
+    "backend": [
+      {
+        "url_pattern": "/api/auth/me",
+        "host": ["http://auth:8000"]
+      }
+    ]
+  },
+  {
     "endpoint": "/api/auth/role-request",
     "method": "POST",
     "output_encoding": "no-op",

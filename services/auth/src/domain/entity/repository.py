@@ -48,3 +48,11 @@ class AbstractAuthRepository(ABC):
     @abstractmethod
     async def cleanup_reset_tokens(self, now: datetime) -> None:
         pass
+
+    @abstractmethod
+    async def delete_reset_tokens_by_entity_id(self, entity_id: UUID) -> None:
+        pass
+
+    @abstractmethod
+    async def delete_auth_entity(self, entity_id: UUID) -> None:
+        pass

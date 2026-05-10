@@ -127,3 +127,13 @@ class AuthSQLAlchemyRepository(AbstractAuthRepository):
         )
         await self.session.execute(stmt)
         await self.session.commit()
+
+    async def delete_reset_tokens_by_entity_id(self, entity_id: UUID) -> None:
+        stmt = delete(PasswordResetToken).where(PasswordResetToken.entity_id == entity_id)
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def delete_auth_entity(self, entity_id: UUID) -> None:
+        stmt = delete(AuthEntity).where(AuthEntity.id == entity_id)
+        await self.session.execute(stmt)
+        await self.session.commit()

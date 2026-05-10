@@ -1,9 +1,11 @@
 from typing import TYPE_CHECKING
 from ..types.mixins import TimestampMix
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String,Text
+from sqlalchemy import Date, Enum as SAEnum, String,Text
 from .base import Base
 from uuid import UUID
+from datetime import date
+from domain.enums import GenderEnum
 
 if TYPE_CHECKING:
     from .ignore_list import IgnoreList
@@ -17,6 +19,11 @@ class Profile(TimestampMix,Base):
     avatar_url: Mapped[str | None] = mapped_column(Text,nullable=True)
     background_url: Mapped[str | None] = mapped_column(Text,nullable=True)
     bio: Mapped[str | None] = mapped_column(Text,nullable=True)
+    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    gender: Mapped[GenderEnum | None] = mapped_column(
+        SAEnum(GenderEnum, name="profile_gender_enum"),
+        nullable=True,
+    )
 
 
     # Reletionship (Links from Profile to IgnoreList)

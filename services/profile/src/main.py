@@ -7,6 +7,8 @@ from config.settings import settings
 from infrastructure.db.db_helper import db_helper
 from api.handlers import setup_exception_handlers
 from api.routers import router as api_router
+from infrastructure.broker import register_broker_subscribers
+from infrastructure.broker.rabbitmq import broker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,10 +21,13 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Lifecycle management: initialize resources on startup, clean up on shutdown."""
     logger.info("🚀 Profile service is starting...")
+    register_broker_subscribers()
+    await broker.start()
 
     yield
 
     logger.info("🛑 Profile service is shutting down, closing connection pool...")
+    await broker.stop()
     await db_helper.dispose()
 
 

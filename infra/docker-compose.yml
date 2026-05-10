@@ -191,8 +191,11 @@ services:
     networks:
       - lorelounge_net
       - profile_db_net
+      - broker_net
     depends_on:
       postgres_profile:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       minio:
         condition: service_started

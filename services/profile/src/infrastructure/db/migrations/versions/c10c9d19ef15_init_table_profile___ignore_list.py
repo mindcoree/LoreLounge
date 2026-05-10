@@ -1,8 +1,8 @@
-"""init_profile_and_ignorelist
+"""init_table_profile_&_ignore_list
 
-Revision ID: 3357d5e87260
+Revision ID: c10c9d19ef15
 Revises: 
-Create Date: 2026-05-06 23:53:19.574254
+Create Date: 2026-05-10 20:54:18.603406
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3357d5e87260'
+revision: str = 'c10c9d19ef15'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,6 +28,8 @@ def upgrade() -> None:
     sa.Column('avatar_url', sa.Text(), nullable=True),
     sa.Column('background_url', sa.Text(), nullable=True),
     sa.Column('bio', sa.Text(), nullable=True),
+    sa.Column('birth_date', sa.Date(), nullable=True),
+    sa.Column('gender', sa.Enum('UNSPECIFIED', 'MALE', 'FEMALE', name='profile_gender_enum'), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_profiles')),

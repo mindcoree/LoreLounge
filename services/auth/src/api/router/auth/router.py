@@ -114,6 +114,27 @@ async def logout(
     for key in (ACCESS_TOKEN_COOKIE_KEY, REFRESH_TOKEN_COOKIE_KEY):
         response.delete_cookie(key=key, path="/", httponly=True, samesite="lax")
 
+
+@router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удаление аккаунта",
+)
+async def delete_current_user_account(
+    payload: PayloadEntity,
+    response: Response,
+    service: AuthServiceDep,
+    refresh_token: Annotated[str | None, Cookie(alias=REFRESH_TOKEN_COOKIE_KEY)] = None,
+) -> None:
+    """Удаляет аккаунт пользователя и отправляет событие на очистку связанных данных."""
+    if refresh_token:
+        await service.revoke_refresh_token(refresh_token)
+
+    await service.delete_account(UUID(payload.sub))
+
+    for key in (ACCESS_TOKEN_COOKIE_KEY, REFRESH_TOKEN_COOKIE_KEY):
+        response.delete_cookie(key=key, path="/", httponly=True, samesite="lax")
+
 @router.get("/.well-known/jwks.json", tags=["Infra"], include_in_schema=False)
 async def get_jwks():
     """

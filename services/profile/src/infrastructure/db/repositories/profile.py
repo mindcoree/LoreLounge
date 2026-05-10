@@ -26,6 +26,15 @@ class ProfileRepository(BaseRepository[Profile]):
         query = select(self.model).where(self.model.name == name)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+    async def delete_by_user_id(self, user_id: UUID) -> bool:
+        profile = await self.get_by_user_id(user_id)
+        if not profile:
+            return False
+
+        await self.session.delete(profile)
+        await self.session.flush()
+        return True
     
     
     

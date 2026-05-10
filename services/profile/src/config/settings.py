@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .database import DatabaseSettings
+from .rabbitmq import RabbitmqSettings
 from .prefixes import ApiProfilePrefix
 from .storage import MinioSettings, StorageSettings
 
@@ -40,6 +41,7 @@ class Settings(BaseSettings):
     api: ApiProfilePrefix = Field(default_factory=ApiProfilePrefix)
     db: DatabaseSettings = Field(default_factory=cast(Any, DatabaseSettings))
     minio: MinioSettings = Field(default_factory=cast(Any, MinioSettings))
+    rabbitmq: RabbitmqSettings = Field(default_factory=cast(Any, RabbitmqSettings))
     storage: StorageSettings = Field(default_factory=StorageSettings)
 
 

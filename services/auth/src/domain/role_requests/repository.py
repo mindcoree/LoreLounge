@@ -3,7 +3,7 @@ from typing import Sequence, Optional
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func
+from sqlalchemy import delete, select, update, func
 
 from domain.common.enums import DesiredRole, RoleRequestStatus
 from infrastructure.db.models import AuthEntity, RoleRequest
@@ -68,3 +68,8 @@ class RoleRequestRepository:
         result = await self.session.execute(stmt)
         await self.session.commit()
         return result.scalar_one_or_none()
+
+    async def delete_by_entity_id(self, entity_id: UUID) -> None:
+        stmt = delete(RoleRequest).where(RoleRequest.entity_id == entity_id)
+        await self.session.execute(stmt)
+        await self.session.commit()

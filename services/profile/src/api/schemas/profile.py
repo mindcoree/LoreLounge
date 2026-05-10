@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import date, datetime
+from domain.enums import GenderEnum
 
 
 class ProfileCreate(BaseModel):
@@ -17,6 +18,12 @@ class ProfileCreate(BaseModel):
     background_url: Optional[str] = Field(
         None, description="User profile background URL"
     )
+    birth_date: Optional[date] = Field(
+        None, description="User birth date"
+    )
+    gender: Optional[GenderEnum] = Field(
+        None, description="User gender"
+    )
 
 
 class ProfileUpdate(BaseModel):
@@ -31,6 +38,12 @@ class ProfileUpdate(BaseModel):
     )
     background_url: Optional[str] = Field(
         None, description="User profile background URL"
+    )
+    birth_date: Optional[date] = Field(
+        None, description="User birth date"
+    )
+    gender: Optional[GenderEnum] = Field(
+        None, description="User gender"
     )
 
 
@@ -48,6 +61,12 @@ class ProfileResponse(BaseModel):
     )
     background_url: Optional[str] = Field(
         None, description="User profile background URL"
+    )
+    birth_date: Optional[date] = Field(
+        None, description="User birth date"
+    )
+    gender: Optional[GenderEnum] = Field(
+        None, description="User gender"
     )
     created_at: datetime = Field(..., description="The timestamp when the profile was created.")
     updated_at: datetime = Field(..., description="The timestamp when the profile was last updated.")

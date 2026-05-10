@@ -96,6 +96,10 @@ class PasswordResetNotification(BaseModel):
     to_email: EmailStr
     reset_link: str
 
+
+class AccountDeletionNotification(BaseModel):
+    user_id: UUID
+
 class DomainAuthEntity(BaseModel):
     id: UUID
     email: str
