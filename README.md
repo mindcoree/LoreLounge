@@ -37,37 +37,60 @@
 ## Архитектура
 
 ```mermaid
-flowchart TB
-    Browser(["🌐 Браузер"])
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+flowchart LR
+    %% --- Legend / Layout ---
+    classDef gateway stroke:#818cf8,fill:#eef2ff;
+    classDef frontend stroke:#38bdf8,fill:#f0f9ff;
+    classDef services stroke:#2dd4bf,fill:#f0fdfa;
+    classDef storage stroke:#a3e635,fill:#f7fee7;
+    classDef broker stroke:#f87171,fill:#fef2f2;
+    classDef external stroke:#a78bfa,fill:#f5f3ff;
 
+    %% --- External / Entry point ---
+    Browser(["🌐 Браузер<br/><small>Пользовательский интерфейс, который обращается к приложению</small>"])
+    class Browser external
+
+    %% --- Gateway Layer ---
+    subgraph gateway_layer["gateway_layer"]
+        Nginx["Nginx<br/><small>HTTP маршрутизация и отдача статических файлов</small>"]
+        KrakenD["KrakenD API Gateway<br/><small>Агрегация и передача запросов к микросервисам</small>"]
+    end
+
+    %% --- Frontend Layer ---
+    subgraph frontend_layer["frontend_layer"]
+        Frontend["Next.js<br/><small>SSR/SPA клиентская часть приложения</small>"]
+    end
+
+    %% --- Services Layer ---
+    subgraph services_layer["services_layer"]
+        Auth["Auth (FastAPI)<br/><small>Регистрация, вход, JWT токены</small>"]
+        Profile["Profile (FastAPI)<br/><small>Хранение информации о пользователе</small>"]
+        Notification["Notification (FastStream)<br/><small>Обработка и рассылка событий</small>"]
+    end
+
+    %% --- Storage Layer ---
+    subgraph storage_layer["storage_layer"]
+        PGAuth["Postgres Auth<br/><small>База данных авторизации</small>"]
+        PGProfile["Postgres Profile<br/><small>База данных профилей</small>"]
+        RedisAuth["Redis Auth<br/><small>Кэш и список аннулированных токенов</small>"]
+        MinIO["MinIO<br/><small>Хранение медиа и аватаров</small>"]
+    end
+
+    %% --- Broker Layer ---
+    subgraph broker_layer["broker_layer"]
+        RabbitMQ["RabbitMQ<br/><small>Обмен событиями между сервисами</small>"]
+    end
+
+    %% Add classes
+    class Nginx,KrakenD gateway
+    class Frontend frontend
+    class Auth,Profile,Notification services
+    class PGAuth,RedisAuth,PGProfile,MinIO storage
+    class RabbitMQ broker
+
+    %% --- Connections ---
     Browser -->|"HTTP :80"| Nginx
-
-    subgraph gateway["🔀 Шлюзы"]
-        Nginx["Nginx\n:80"]
-        KrakenD["KrakenD\nAPI Gateway\n:8080"]
-    end
-
-    subgraph frontend_layer["🖥️ Фронтенд"]
-        Frontend["Next.js\n:3000"]
-    end
-
-    subgraph services_layer["⚙️ Микросервисы"]
-        Auth["auth\nFastAPI :8000"]
-        Profile["profile\nFastAPI :8001"]
-        Notification["notification\nFastStream"]
-    end
-
-    subgraph storage_layer["🗄️ Хранилища"]
-        PGAuth["postgres_auth\n:5432"]
-        RedisAuth["redis_auth\n:6379"]
-        PGProfile["postgres_profile\n:5433"]
-        MinIO["MinIO\n:9000"]
-    end
-
-    subgraph broker_layer["📨 Брокер"]
-        RabbitMQ["RabbitMQ\n:5672"]
-    end
-
     Nginx -->|"/*"| Frontend
     Nginx -->|"/api/*"| KrakenD
 
