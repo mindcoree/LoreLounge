@@ -243,8 +243,8 @@ export default function ProfileSettingsPage() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-              <NavItem icon={<UserRound size={16} />} title="Профиль" desc="Никнейм, о себе, день рождения, пол" active />
-              <NavItem icon={<Lock size={16} />} title="Безопасность и вход в аккаунт" desc="Смена почты и пароля, 2fa" />
+              <NavItem icon={<UserRound size={16} />} title="Профиль" desc="Никнейм, о себе, день рождения, пол" active onClick={() => router.push("/profile/settings")} />
+              <NavItem icon={<Lock size={16} />} title="Безопасность и вход в аккаунт" desc="Смена почты и пароля, 2fa" onClick={() => router.push("/profile/settings/security")} />
               <NavItem icon={<Bell size={16} />} title="Уведомления" desc="Получение наград и активности" />
               <NavItem icon={<ShieldBan size={16} />} title="Блокировки" desc="Аккаунтов, комментариев и постов" />
             </div>
@@ -622,14 +622,17 @@ function NavItem({
   title,
   desc,
   active = false,
+  onClick,
 }: {
   icon: React.ReactNode;
   title: string;
   desc: string;
   active?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <button
+      onClick={onClick}
       className={`w-full rounded-xl border px-3 py-2.5 text-left transition-colors ${
         active
           ? "border-white/20 bg-white/10 text-white"
