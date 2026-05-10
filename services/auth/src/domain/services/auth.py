@@ -206,7 +206,7 @@ class AuthServices:
             
             token = secrets.token_urlsafe(32)
             token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-            expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=45)
             await self.repo.create_reset_token(entity.id, token_hash, expires_at)
 
             reset_link = f"{settings.frontend_url}/reset-password?token={token}"
