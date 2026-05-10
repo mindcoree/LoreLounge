@@ -106,7 +106,6 @@ flowchart LR
     RabbitMQ -.->|"cleanup data"| Profile
 
     RabbitMQ -->|"subscribe"| Notification
-    Notification -->|"read media"| MinIO
 ```
 
 ![Архитектура системы](./docs/img/architecture.png)
