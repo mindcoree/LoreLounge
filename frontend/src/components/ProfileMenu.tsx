@@ -29,11 +29,16 @@ interface UserProfile {
   coins?: number;
 }
 
+interface ProfileInfo {
+  name: string;
+}
+
 const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout?: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [darkThemeOn, setDarkThemeOn] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -44,9 +49,19 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
     const fetchUser = async () => {
       setLoading(true);
       try {
-        const result = await apiFetchJson<UserProfile>("/auth/me");
-        if (result.ok) {
-          setUser(result.data);
+        const [authResult, profileResult] = await Promise.all([
+          apiFetchJson<UserProfile>("/auth/me"),
+          apiFetchJson<ProfileInfo>("/profile/me"),
+        ]);
+
+        if (authResult.ok) {
+          setUser(authResult.data);
+        }
+
+        if (profileResult.ok && profileResult.data.name?.trim()) {
+          setProfileName(profileResult.data.name.trim());
+        } else {
+          setProfileName(null);
         }
       } finally {
         setLoading(false);
@@ -97,6 +112,7 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
   const coins = user.coins ?? 0;
   const greenCount = 0;
   const lightning = 40;
+  const displayName = profileName || user.email;
 
   return (
     <div ref={menuRef} className="relative">
@@ -124,8 +140,7 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[19px] font-semibold leading-6 text-white">{user.email}</p>
-                <p className="mt-0.5 text-[15px] text-white/55">ID: {user.id}</p>
+                <p className="truncate text-[19px] font-semibold leading-6 text-white">{displayName}</p>
 
                 <div className="mt-6 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-[17px] font-semibold text-white">

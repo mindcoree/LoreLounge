@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Lock, ShieldBan, UserRound, ArrowLeft, X } from "lucide-react";
+import { Bell, Lock, ShieldBan, UserRound, ArrowLeft, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import Header from "@/components/Header";
 import { apiFetchJson } from "@/lib/apiClient";
 
@@ -22,6 +22,23 @@ type ProfileData = {
 
 type Gender = "unspecified" | "male" | "female";
 
+const RU_MONTHS = [
+  "январь",
+  "февраль",
+  "март",
+  "апрель",
+  "май",
+  "июнь",
+  "июль",
+  "август",
+  "сентябрь",
+  "октябрь",
+  "ноябрь",
+  "декабрь",
+];
+
+const WEEKDAY_SHORT = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
+
 export default function ProfileSettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -36,6 +53,9 @@ export default function ProfileSettingsPage() {
   const [nickname, setNickname] = useState("");
   const [about, setAbout] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [birthDatePickerOpen, setBirthDatePickerOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
   const [gender, setGender] = useState<Gender>("unspecified");
 
   const [allowExchanges, setAllowExchanges] = useState(true);
@@ -59,6 +79,14 @@ export default function ProfileSettingsPage() {
           setAbout(profile.data.bio ?? "");
           setBirthDate(profile.data.birth_date ?? "");
           setGender(profile.data.gender ?? "unspecified");
+
+          if (profile.data.birth_date) {
+            const parsedDate = new Date(`${profile.data.birth_date}T00:00:00`);
+            if (!Number.isNaN(parsedDate.getTime())) {
+              setCalendarMonth(parsedDate.getMonth());
+              setCalendarYear(parsedDate.getFullYear());
+            }
+          }
         } else if (profile.status === 404) {
           setNickname(me.data.email.split("@")[0] ?? "");
           setAbout("");
@@ -146,6 +174,28 @@ export default function ProfileSettingsPage() {
     }, 220);
   };
 
+  const openBirthDatePicker = () => {
+    if (birthDate) {
+      const parsedDate = new Date(`${birthDate}T00:00:00`);
+      if (!Number.isNaN(parsedDate.getTime())) {
+        setCalendarMonth(parsedDate.getMonth());
+        setCalendarYear(parsedDate.getFullYear());
+      }
+    }
+    setBirthDatePickerOpen(true);
+  };
+
+  const formatBirthDateLabel = (value: string) => {
+    if (!value) return "Выберите дату";
+    const parsed = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return "Выберите дату";
+    return parsed.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#0b0b0b] text-white">
@@ -158,6 +208,8 @@ export default function ProfileSettingsPage() {
   if (!user) {
     return null;
   }
+
+  const displayName = nickname.trim() || user.email.split("@")[0] || "Пользователь";
 
   return (
     <main className="min-h-screen bg-[#0b0b0b] text-white">
@@ -186,8 +238,7 @@ export default function ProfileSettingsPage() {
                 {initials}
               </div>
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-white/95">{user.email}</div>
-                <div className="truncate text-xs text-white/55">#{user.id.slice(0, 8)}</div>
+                <div className="truncate text-sm font-semibold text-white/95">{displayName}</div>
               </div>
             </div>
 
@@ -245,12 +296,30 @@ export default function ProfileSettingsPage() {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-white/85">День рождения</label>
-                  <input
-                    type="date"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    className="h-11 w-full max-w-xs rounded-xl border border-white/10 bg-[#101010] px-4 text-sm text-white outline-none transition-colors focus:border-sky-500/50"
-                  />
+                  <div className="relative w-full max-w-xs">
+                    <button
+                      type="button"
+                      onClick={openBirthDatePicker}
+                      className="inline-flex h-11 items-center gap-2 rounded-full border border-white/10 bg-[#202020] px-4 text-sm font-semibold text-white/90 transition-colors hover:bg-[#272727]"
+                    >
+                      {formatBirthDateLabel(birthDate)}
+                    </button>
+
+                    {birthDatePickerOpen ? (
+                      <DatePickerPanel
+                        month={calendarMonth}
+                        year={calendarYear}
+                        selectedDate={birthDate}
+                        onMonthChange={setCalendarMonth}
+                        onYearChange={setCalendarYear}
+                        onSelectDate={(value) => {
+                          setBirthDate(value);
+                          setBirthDatePickerOpen(false);
+                        }}
+                        onClose={() => setBirthDatePickerOpen(false)}
+                      />
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-xs text-white/45">Можно указать только один раз.</p>
                 </div>
 
@@ -374,6 +443,177 @@ export default function ProfileSettingsPage() {
         </div>
       ) : null}
     </main>
+  );
+}
+
+function DatePickerPanel({
+  month,
+  year,
+  selectedDate,
+  onMonthChange,
+  onYearChange,
+  onSelectDate,
+  onClose,
+}: {
+  month: number;
+  year: number;
+  selectedDate: string;
+  onMonthChange: (nextMonth: number) => void;
+  onYearChange: (nextYear: number) => void;
+  onSelectDate: (value: string) => void;
+  onClose: () => void;
+}) {
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const weekDayOffset = (firstDay.getDay() + 6) % 7;
+
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const cells: Array<{ day: number; monthOffset: -1 | 0 | 1 }> = [];
+
+  for (let i = weekDayOffset - 1; i >= 0; i -= 1) {
+    cells.push({ day: daysInPrevMonth - i, monthOffset: -1 });
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    cells.push({ day, monthOffset: 0 });
+  }
+
+  while (cells.length % 7 !== 0 || cells.length < 42) {
+    const day = cells.length - (weekDayOffset + daysInMonth) + 1;
+    cells.push({ day, monthOffset: 1 });
+  }
+
+  const selected = selectedDate ? new Date(`${selectedDate}T00:00:00`) : null;
+  const isSelected = (day: number, offset: -1 | 0 | 1) => {
+    if (!selected) return false;
+    return (
+      selected.getFullYear() === year &&
+      selected.getMonth() === month + offset &&
+      selected.getDate() === day
+    );
+  };
+
+  const toDateValue = (day: number, offset: -1 | 0 | 1) => {
+    const d = new Date(year, month + offset, day);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  };
+
+  const goPrevMonth = () => {
+    if (month === 0) {
+      onMonthChange(11);
+      onYearChange(year - 1);
+      return;
+    }
+    onMonthChange(month - 1);
+  };
+
+  const goNextMonth = () => {
+    if (month === 11) {
+      onMonthChange(0);
+      onYearChange(year + 1);
+      return;
+    }
+    onMonthChange(month + 1);
+  };
+
+  const years = Array.from({ length: 101 }, (_, idx) => new Date().getFullYear() - 80 + idx);
+
+  return (
+    <div className="absolute left-0 top-[52px] z-30 w-[290px] rounded-3xl border border-white/10 bg-[#131722] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.55)]">
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={goPrevMonth}
+          className="rounded-full p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label="Предыдущий месяц"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <div className="text-sm font-semibold text-white/90">{RU_MONTHS[month]} {year}</div>
+        <button
+          type="button"
+          onClick={goNextMonth}
+          className="rounded-full p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label="Следующий месяц"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        <div className="relative">
+          <select
+            value={month}
+            onChange={(e) => onMonthChange(Number(e.target.value))}
+            className="h-9 w-full appearance-none rounded-full border border-white/10 bg-[#1a1f2b] px-3 text-sm text-white/90 outline-none"
+          >
+            {RU_MONTHS.map((m, idx) => (
+              <option key={m} value={idx}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/50" />
+        </div>
+
+        <div className="relative">
+          <select
+            value={year}
+            onChange={(e) => onYearChange(Number(e.target.value))}
+            className="h-9 w-full appearance-none rounded-full border border-white/10 bg-[#1a1f2b] px-3 text-sm text-white/90 outline-none"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/50" />
+        </div>
+      </div>
+
+      <div className="mb-2 grid grid-cols-7 gap-1.5 text-center text-xs uppercase text-white/45">
+        {WEEKDAY_SHORT.map((label) => (
+          <div key={label}>{label}</div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1.5">
+        {cells.map((cell, index) => {
+          const muted = cell.monthOffset !== 0;
+          const selectedCell = isSelected(cell.day, cell.monthOffset);
+          return (
+            <button
+              type="button"
+              key={`${cell.monthOffset}-${cell.day}-${index}`}
+              onClick={() => onSelectDate(toDateValue(cell.day, cell.monthOffset))}
+              className={`h-8 w-8 rounded-full text-sm transition-colors ${
+                selectedCell
+                  ? "bg-[#2f5ec6] text-white"
+                  : muted
+                    ? "text-white/25 hover:bg-white/5"
+                    : "text-white/85 hover:bg-white/10"
+              }`}
+            >
+              {cell.day}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 flex justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10"
+        >
+          Закрыть
+        </button>
+      </div>
+    </div>
   );
 }
 

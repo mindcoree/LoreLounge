@@ -27,8 +27,13 @@ interface UserProfile {
   coins?: number;
 }
 
+interface ProfileInfo {
+  name: string;
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
@@ -50,9 +55,18 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const result = await apiFetchJson<UserProfile>("/auth/me");
-        if (result.ok) {
-          setUser(result.data);
+        const [authResult, profileResult] = await Promise.all([
+          apiFetchJson<UserProfile>("/auth/me"),
+          apiFetchJson<ProfileInfo>("/profile/me"),
+        ]);
+
+        if (authResult.ok) {
+          setUser(authResult.data);
+          if (profileResult.ok && profileResult.data.name?.trim()) {
+            setProfileName(profileResult.data.name.trim());
+          } else {
+            setProfileName(null);
+          }
         } else {
           router.push("/");
         }
@@ -85,7 +99,8 @@ export default function ProfilePage() {
     return null;
   }
 
-  const initials = user.email.charAt(0).toUpperCase();
+  const displayName = profileName || user.email.split("@")[0];
+  const initials = displayName.charAt(0).toUpperCase();
   const coins = user.coins ?? 0;
 
   const tabs = [
@@ -147,13 +162,12 @@ export default function ProfilePage() {
 
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="truncate text-2xl font-semibold md:text-3xl">{user.email.split("@")[0]}</h1>
+                  <h1 className="truncate text-2xl font-semibold md:text-3xl">{displayName}</h1>
                   <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/60">
                     Уровень 2 · Топ #Не определён
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/55">
-                  <span>ID: {user.id}</span>
                   <span>Роль: {user.role}</span>
                   <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-white/80">
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
