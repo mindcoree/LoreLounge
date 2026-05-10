@@ -242,8 +242,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-admin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-SuperSecret123!}
     ports:
-      # Для локальной разработки публикуем только на loopback.
-      - "127.0.0.1:9000:9000"
+      # API на всех интерфейсах (для docker сети), console только localhost
+      - "0.0.0.0:9000:9000"
       - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data

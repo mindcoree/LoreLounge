@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Lock, ShieldBan, UserRound, ArrowLeft, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { Bell, Lock, ShieldBan, UserRound, ArrowLeft, X, ChevronLeft, ChevronRight, ChevronDown, Loader2, ImageIcon, Camera } from "lucide-react";
 import Header from "@/components/Header";
 import { apiFetchJson } from "@/lib/apiClient";
 
@@ -61,6 +61,10 @@ export default function ProfileSettingsPage() {
   const [allowExchanges, setAllowExchanges] = useState(true);
   const [privateProfile, setPrivateProfile] = useState(false);
   const [extendedCatalog, setExtendedCatalog] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -86,6 +90,10 @@ export default function ProfileSettingsPage() {
               setCalendarMonth(parsedDate.getMonth());
               setCalendarYear(parsedDate.getFullYear());
             }
+          }
+
+          if (profile.data.avatar_url) {
+            setAvatarUrl(profile.data.avatar_url);
           }
         } else if (profile.status === 404) {
           setNickname(me.data.email.split("@")[0] ?? "");
@@ -161,6 +169,65 @@ export default function ProfileSettingsPage() {
 
   const canConfirmDelete = deleteConfirmText.trim().toLowerCase() === "удалить аккаунт";
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setStatus("Выберите изображение");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setStatus("Максимальный размер 2MB");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setStatus(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const res = await fetch("/api/profile/me/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const raw = await res.json();
+        setStatus(raw?.detail || "Ошибка загрузки");
+        return;
+      }
+
+      const data = await res.json();
+      if (data.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+        setAvatarError(false);
+
+        // Обновляем профиль с новым avatar_url
+        const patchRes = await apiFetchJson("/profile/me", {
+          method: "PATCH",
+          body: JSON.stringify({ avatar_url: data.avatar_url }),
+        });
+
+        if (patchRes.ok) {
+          setStatus("Аватар обновлён");
+          router.refresh();
+        } else {
+          setStatus("Аватар загружен, но не сохранён в профиле");
+        }
+      }
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   const openDeleteModal = () => {
     setDeleteConfirmText("");
     setDeleteModalRendered(true);
@@ -200,7 +267,12 @@ export default function ProfileSettingsPage() {
     return (
       <main className="min-h-screen bg-[#0b0b0b] text-white">
         <Header onOpenAuth={() => undefined} />
-        <div className="mx-auto max-w-[1280px] px-4 py-10 text-white/60">Загрузка настроек...</div>
+        <div className="mx-auto max-w-[1280px] px-4 py-10">
+          <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <aside className="rounded-2xl border border-white/10 bg-[#171717] p-3 sm:p-4 min-h-[200px]" />
+            <section className="min-h-[200px]" />
+          </div>
+        </div>
       </main>
     );
   }
@@ -234,9 +306,18 @@ export default function ProfileSettingsPage() {
         <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="rounded-2xl border border-white/10 bg-[#171717] p-3 sm:p-4">
             <div className="mb-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#202020] p-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#b7d4ff] to-[#6fc3a2] font-bold text-white">
-                {initials}
-              </div>
+              {avatarUrl && !avatarError ? (
+                <img
+                  src={avatarUrl}
+                  alt="Аватар"
+                  className="h-11 w-11 rounded-xl object-cover"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#b7d4ff] to-[#6fc3a2] font-bold text-white">
+                  {initials}
+                </div>
+              )}
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-white/95">{displayName}</div>
               </div>
@@ -260,14 +341,50 @@ export default function ProfileSettingsPage() {
 
           <section className="rounded-2xl border border-white/10 bg-[#171717] p-4 sm:p-5 lg:p-6">
             <div className="grid gap-4 md:grid-cols-[196px_minmax(0,1fr)]">
-              <div>
-                <div className="mb-2 text-sm font-semibold text-white/85">Аватарка</div>
-                <div className="relative h-44 w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#a6bf79] to-[#6ead72]">
-                  <button className="absolute right-2 top-2 rounded-full bg-[#131722] px-3 py-1 text-xs font-semibold text-white/90">
-                    Изменить
-                  </button>
-                  <div className="grid h-full place-items-center text-xl font-semibold text-white/85">{initials}</div>
+              <div className="flex flex-col items-center sm:items-start">
+                <div className="mb-3 text-sm font-semibold text-white/85">Аватарка</div>
+                <div 
+                  className="group relative h-40 w-40 cursor-pointer overflow-hidden rounded-full border-2 border-white/10 bg-[#1a1a1a] shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)]"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                  
+                  {/* Image or Initials */}
+                  {avatarUrl && !avatarError ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Аватар"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      onError={() => setAvatarError(true)}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500/20 to-emerald-500/20 text-3xl font-bold text-white/90">
+                      {initials}
+                    </div>
+                  )}
+
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <Camera className="mb-1 text-white" size={24} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white">Обновить</span>
+                  </div>
+
+                  {/* Loading State */}
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                      <Loader2 size={24} className="animate-spin text-blue-500" />
+                    </div>
+                  )}
                 </div>
+                <p className="mt-3 max-w-[160px] text-center text-[11px] leading-relaxed text-white/40 sm:text-left">
+                  Рекомендуем квадратное изображение, минимум 400x400px
+                </p>
               </div>
 
               <div className="space-y-4">

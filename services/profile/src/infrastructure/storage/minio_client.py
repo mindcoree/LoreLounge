@@ -54,7 +54,7 @@ async def upload_file_to_minio(
     )
 
     scheme = "https" if settings.minio.use_ssl else "http"
-    return f"{scheme}://{settings.minio.endpoint}/{settings.minio.bucket_name}/{object_name}"
+    return f"/media/{settings.minio.bucket_name}/{object_name}"
 
 
 async def delete_file_from_minio(user_id: UUID, file_type: str = "avatar") -> None:

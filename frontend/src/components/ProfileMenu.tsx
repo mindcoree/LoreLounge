@@ -31,6 +31,7 @@ interface UserProfile {
 
 interface ProfileInfo {
   name: string;
+  avatar_url: string | null;
 }
 
 const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout?: () => void }) => {
@@ -39,6 +40,8 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
   const [darkThemeOn, setDarkThemeOn] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState(false);
   const [loading, setLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -62,6 +65,11 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
           setProfileName(profileResult.data.name.trim());
         } else {
           setProfileName(null);
+        }
+
+        if (profileResult.ok && profileResult.data.avatar_url) {
+          setAvatarUrl(profileResult.data.avatar_url);
+          setAvatarError(false);
         }
       } finally {
         setLoading(false);
@@ -117,13 +125,42 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
   return (
     <div ref={menuRef} className="relative">
       <button
-        onClick={() => setIsOpen((value) => !value)}
+        onClick={async () => {
+          if (!isOpen) {
+            setLoading(true);
+            const [authResult, profileResult] = await Promise.all([
+              apiFetchJson<UserProfile>("/auth/me"),
+              apiFetchJson<ProfileInfo>("/profile/me"),
+            ]);
+            if (authResult.ok) setUser(authResult.data);
+            if (profileResult.ok) {
+              if (profileResult.data.name?.trim()) setProfileName(profileResult.data.name.trim());
+              if (profileResult.data.avatar_url) {
+                setAvatarUrl(profileResult.data.avatar_url);
+                setAvatarError(false);
+              }
+            }
+            setLoading(false);
+            setIsOpen(true);
+          } else {
+            setIsOpen(false);
+          }
+        }}
         className="flex items-center gap-2 rounded-full p-2 transition-colors hover:bg-[#1a1a1a]"
         aria-label="Профиль"
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-sm font-bold text-white">
-          {initials}
-        </div>
+        {avatarUrl && !avatarError ? (
+            <img
+              src={avatarUrl}
+              alt="Аватар"
+              className="h-10 w-10 rounded-full object-cover"
+              onError={() => setAvatarError(true)}
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-sm font-bold text-white">
+              {initials}
+            </div>
+          )}
         {isOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
       </button>
 
@@ -134,8 +171,17 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
             className="mx-3 mt-3 rounded-[22px] border border-white/10 bg-[#202020] p-4 text-left transition-colors hover:bg-white/[0.035]"
           >
             <div className="flex items-start gap-4">
-              <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#b8d9a8] to-[#6fb59a] text-2xl font-bold text-white">
-                {initials}
+              <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#b8d9a8] to-[#6fb59a] text-2xl font-bold text-white overflow-hidden">
+                {avatarUrl && !avatarError ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Аватар"
+                    className="h-full w-full object-cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  initials
+                )}
                 <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full border-2 border-[#202020] bg-emerald-400" />
               </div>
 

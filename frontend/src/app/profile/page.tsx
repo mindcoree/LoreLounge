@@ -29,11 +29,14 @@ interface UserProfile {
 
 interface ProfileInfo {
   name: string;
+  avatar_url: string | null;
 }
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
@@ -66,6 +69,10 @@ export default function ProfilePage() {
             setProfileName(profileResult.data.name.trim());
           } else {
             setProfileName(null);
+          }
+          if (profileResult.ok && profileResult.data.avatar_url) {
+            setAvatarUrl(profileResult.data.avatar_url);
+            setAvatarError(false);
           }
         } else {
           router.push("/");
@@ -154,9 +161,18 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-5 p-5 md:flex-row md:items-start md:justify-between md:p-6">
             <div className="flex items-start gap-4">
               <div className="relative">
-                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#b7d4ff] to-[#6fc3a2] text-3xl font-bold text-white shadow-lg shadow-black/20 md:h-20 md:w-20">
-                  {initials}
-                </div>
+                {avatarUrl && !avatarError ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Аватар"
+                    className="h-16 w-16 rounded-xl object-cover shadow-lg shadow-black/20 md:h-20 md:w-20"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#b7d4ff] to-[#6fc3a2] text-3xl font-bold text-white shadow-lg shadow-black/20 md:h-20 md:w-20">
+                    {initials}
+                  </div>
+                )}
                 <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full border-2 border-[#171717] bg-emerald-400" />
               </div>
 

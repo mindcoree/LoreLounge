@@ -10,19 +10,31 @@ interface UserData {
   email: string;
 }
 
+interface ProfileData {
+  name: string;
+  avatar_url: string | null;
+}
+
 const Header = ({ onOpenAuth }: { onOpenAuth?: () => void }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Проверяем аутентификацию при загрузке
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const result = await apiFetchJson<UserData>("/auth/me");
-        if (result.ok) {
-          setUser(result.data);
+        const [authResult, profileResult] = await Promise.all([
+          apiFetchJson<UserData>("/auth/me"),
+          apiFetchJson<ProfileData>("/profile/me"),
+        ]);
+        if (authResult.ok) {
+          setUser(authResult.data);
           setIsAuthenticated(true);
+        }
+        if (profileResult.ok) {
+          setProfile(profileResult.data);
         }
       } finally {
         setCheckingAuth(false);

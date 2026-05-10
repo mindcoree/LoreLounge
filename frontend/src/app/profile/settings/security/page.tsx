@@ -14,6 +14,7 @@ type UserProfile = {
 
 type ProfileData = {
   name: string;
+  avatar_url: string | null;
 };
 
 export default function SecuritySettingsPage() {
@@ -25,6 +26,8 @@ export default function SecuritySettingsPage() {
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -48,6 +51,10 @@ export default function SecuritySettingsPage() {
         const profile = await apiFetchJson<ProfileData>("/profile/me");
         if (profile.ok) {
           setNickname(profile.data.name ?? "");
+          if (profile.data.avatar_url) {
+            setAvatarUrl(profile.data.avatar_url);
+            setAvatarError(false);
+          }
         } else if (profile.status === 404) {
           setNickname(me.data.email.split("@")[0] ?? "");
         }
@@ -171,7 +178,12 @@ export default function SecuritySettingsPage() {
     return (
       <main className="min-h-screen bg-[#0b0b0b] text-white">
         <Header onOpenAuth={() => undefined} />
-        <div className="mx-auto max-w-[1280px] px-4 py-10 text-white/60">Загрузка настроек...</div>
+        <div className="mx-auto max-w-[1280px] px-4 py-10">
+          <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <aside className="rounded-2xl border border-white/10 bg-[#171717] p-3 sm:p-4 min-h-[200px]" />
+            <section className="min-h-[200px]" />
+          </div>
+        </div>
       </main>
     );
   }
@@ -205,9 +217,18 @@ export default function SecuritySettingsPage() {
         <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="rounded-2xl border border-white/10 bg-[#171717] p-3 sm:p-4">
             <div className="mb-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#202020] p-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#b7d4ff] to-[#6fc3a2] font-bold text-white">
-                {initials}
-              </div>
+              {avatarUrl && !avatarError ? (
+                <img
+                  src={avatarUrl}
+                  alt="Аватар"
+                  className="h-11 w-11 rounded-xl object-cover"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#b7d4ff] to-[#6fc3a2] font-bold text-white">
+                  {initials}
+                </div>
+              )}
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-white/95">{displayName}</div>
               </div>
