@@ -109,6 +109,8 @@ flowchart LR
     Notification -->|"read media"| MinIO
 ```
 
+![Архитектура системы](./docs/img/architecture.png)
+
 ---
 
 ## Сетевая изоляция
