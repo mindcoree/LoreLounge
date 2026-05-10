@@ -82,6 +82,9 @@ flowchart TB
     Profile -->|"avatars / media"| MinIO
     Profile -->|"publish event"| RabbitMQ
 
+    Auth -.->|"ACCOUNT_DELETED"| RabbitMQ
+    RabbitMQ -.->|"cleanup data"| Profile
+
     RabbitMQ -->|"subscribe"| Notification
     Notification -->|"read media"| MinIO
 ```
@@ -142,6 +145,39 @@ flowchart LR
 | rabbitmq mgmt | 15672 | RabbitMQ Web UI |
 | minio api | 127.0.0.1:9000 | S3 API (loopback) |
 | minio console | 127.0.0.1:9001 | MinIO Console (loopback) |
+
+---
+
+## Основные потоки данных (Event-Driven)
+
+### Удаление аккаунта (Account Deletion)
+
+Процесс удаления данных пользователя реализован асинхронно через брокер сообщений для обеспечения консистентности между микросервисами.
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 Пользователь
+    participant Auth as 🔒 Auth Service
+    participant RMQ as 📨 RabbitMQ
+    participant Profile as 👤 Profile Service
+    participant MinIO as 📁 MinIO (Storage)
+
+    User->>Auth: DELETE /api/auth/me
+    Auth->>Auth: Удаляет учетную запись в DB
+    Auth->>RMQ: Публикует AccountDeletedEvent (user_id)
+    Auth-->>User: 200 OK (Аккаунт удален)
+    
+    Note over RMQ, Profile: Асинхронная обработка
+    
+    RMQ->>Profile: Доставляет событие
+    Profile->>Profile: Ищет профиль и данные
+    Profile->>MinIO: Удаляет аватар и фон (S3)
+    Profile->>Profile: Удаляет запись профиля в DB
+```
+
+1.  **Auth Service**: Инициатор процесса. После удаления записи из своей БД, он отправляет событие в очередь `account_deletion_queue`.
+2.  **RabbitMQ**: Обеспечивает надежную доставку сообщения между сервисами.
+3.  **Profile Service**: Подписан на очередь. При получении события производит полную очистку: удаляет связанные файлы из MinIO и запись профиля из PostgreSQL.
 
 ---
 
