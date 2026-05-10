@@ -6,10 +6,10 @@
   "timeout": "5000ms",
   "output_encoding": "json",
   "endpoints": [
-    {{ include "endpoints/auth-public.tmpl" }},
-    {{ include "endpoints/auth-protected.tmpl" }},
-    {{ include "endpoints/profile-public.tmpl" }},
-    {{ include "endpoints/profile-protected.tmpl" }}
+    {{ template "auth-public.tmpl" . }},
+    {{ template "auth-protected.tmpl" . }},
+    {{ template "profile-public.tmpl" . }},
+    {{ template "profile-protected.tmpl" . }}
   ],
   "extra_config": {
     "http/secure": {

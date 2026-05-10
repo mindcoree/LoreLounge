@@ -2,13 +2,13 @@
   "endpoint": "/api/profile/me",
   "method": "GET",
   "output_encoding": "no-op",
-  "input_headers": {{ include "partials/headers-standard.tmpl" }},
+  "input_headers": {{ template "headers-standard.tmpl" . }},
   "extra_config": {
-    "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+    "auth/validator": {{ template "jwt-validator.tmpl" . }}
   },
   "backend": [
     {
-      "url_pattern": "/api/profile/me",
+      "url_pattern": "/profile/me",
       "host": ["http://profile:8000"]
     }
   ]
@@ -17,13 +17,13 @@
   "endpoint": "/api/profile/me",
   "method": "PUT",
   "output_encoding": "no-op",
-  "input_headers": {{ include "partials/headers-post.tmpl" }},
+  "input_headers": {{ template "headers-post.tmpl" . }},
   "extra_config": {
-    "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+    "auth/validator": {{ template "jwt-validator.tmpl" . }}
   },
   "backend": [
     {
-      "url_pattern": "/api/profile/me",
+      "url_pattern": "/profile/me",
       "host": ["http://profile:8000"]
     }
   ]
@@ -32,13 +32,13 @@
   "endpoint": "/api/profile/me",
   "method": "PATCH",
   "output_encoding": "no-op",
-  "input_headers": {{ include "partials/headers-post.tmpl" }},
+  "input_headers": {{ template "headers-post.tmpl" . }},
   "extra_config": {
-    "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+    "auth/validator": {{ template "jwt-validator.tmpl" . }}
   },
   "backend": [
     {
-      "url_pattern": "/api/profile/me",
+      "url_pattern": "/profile/me",
       "host": ["http://profile:8000"]
     }
   ]
@@ -47,13 +47,13 @@
   "endpoint": "/api/profile/me/upload",
   "method": "POST",
   "output_encoding": "no-op",
-  "input_headers": {{ include "partials/headers-post.tmpl" }},
+  "input_headers": {{ template "headers-post.tmpl" . }},
   "extra_config": {
-    "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+    "auth/validator": {{ template "jwt-validator.tmpl" . }}
   },
   "backend": [
     {
-      "url_pattern": "/api/profile/me/upload",
+      "url_pattern": "/profile/me/upload",
       "host": ["http://profile:8000"]
     }
   ]
@@ -62,14 +62,14 @@
   "endpoint": "/api/profile/me/ignored",
   "method": "GET",
   "output_encoding": "no-op",
-  "input_headers": {{ include "partials/headers-standard.tmpl" }},
+  "input_headers": {{ template "headers-standard.tmpl" . }},
   "input_query_strings": ["*"],
   "extra_config": {
-    "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+    "auth/validator": {{ template "jwt-validator.tmpl" . }}
   },
   "backend": [
     {
-      "url_pattern": "/api/profile/me/ignored",
+      "url_pattern": "/profile/me/ignored",
       "host": ["http://profile:8000"]
     }
   ]
@@ -78,9 +78,9 @@
   "endpoint": "/api/profile/me/ignored/{target_user_id}",
   "method": "POST",
   "output_encoding": "no-op",
-  "input_headers": {{ include "partials/headers-post.tmpl" }},
+  "input_headers": {{ template "headers-post.tmpl" . }},
   "extra_config": {
-    "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+    "auth/validator": {{ template "jwt-validator.tmpl" . }}
   },
   "backend": [
     {
@@ -93,9 +93,9 @@
   "endpoint": "/api/profile/me/ignored/{target_user_id}",
   "method": "DELETE",
   "output_encoding": "no-op",
-  "input_headers": {{ include "partials/headers-standard.tmpl" }},
+  "input_headers": {{ template "headers-standard.tmpl" . }},
   "extra_config": {
-    "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+    "auth/validator": {{ template "jwt-validator.tmpl" . }}
   },
   "backend": [
     {

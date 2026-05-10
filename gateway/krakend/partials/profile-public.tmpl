@@ -1,10 +1,10 @@
 {
-  "endpoint": "/api/profile/{name}",
+  "endpoint": "/api/profile/user/{name}",
   "method": "GET",
   "output_encoding": "no-op",
   "backend": [
     {
-      "url_pattern": "/api/profile/{name}",
+      "url_pattern": "/profile/{name}",
       "host": [
         "http://profile:8000"
       ]

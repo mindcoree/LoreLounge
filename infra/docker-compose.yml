@@ -263,6 +263,7 @@ services:
       - ../gateway/krakend:/etc/krakend
     environment:
       - FC_ENABLE=1
+      - FC_TEMPLATES=./partials
     command: run -c /etc/krakend/krakend.tmpl.json
     depends_on:
       auth:

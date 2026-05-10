@@ -1,6 +1,0 @@
-{{$urlPattern := .url_pattern}}{{$host := .host}}
-[{
-  "url_pattern": "{{$urlPattern}}",
-  "encoding": "no-op",
-  "host": [{{range $i, $h := $host}}{{if $i}}, {{end}}"{{$h}}"{{end}}]
-}]

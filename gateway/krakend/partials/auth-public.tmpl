@@ -4,7 +4,7 @@
   "output_encoding": "no-op",
   "backend": [
     {
-      "url_pattern": "/api/auth/register",
+      "url_pattern": "/auth/register",
       "host": [
         "http://auth:8000"
       ]
@@ -17,7 +17,7 @@
   "output_encoding": "no-op",
   "backend": [
     {
-      "url_pattern": "/api/auth/login",
+      "url_pattern": "/auth/login",
       "host": [
         "http://auth:8000"
       ]
@@ -30,7 +30,7 @@
   "output_encoding": "no-op",
   "backend": [
     {
-      "url_pattern": "/api/auth/logout",
+      "url_pattern": "/auth/logout",
       "host": [
         "http://auth:8000"
       ]
@@ -44,7 +44,7 @@
   "input_headers": ["Cookie"],
   "backend": [
     {
-      "url_pattern": "/api/auth/refresh",
+      "url_pattern": "/auth/refresh",
       "host": [
         "http://auth:8000"
       ]
@@ -57,7 +57,7 @@
   "output_encoding": "no-op",
   "backend": [
     {
-      "url_pattern": "/api/auth/password-reset-request",
+      "url_pattern": "/auth/password-reset-request",
       "host": [
         "http://auth:8000"
       ]
@@ -70,7 +70,7 @@
   "output_encoding": "no-op",
   "backend": [
     {
-      "url_pattern": "/api/auth/password-reset-confirm",
+      "url_pattern": "/auth/password-reset-confirm",
       "host": [
         "http://auth:8000"
       ]
@@ -84,7 +84,7 @@
   "input_query_strings": ["token"],
   "backend": [
     {
-      "url_pattern": "/api/auth/password-reset-check",
+      "url_pattern": "/auth/password-reset-check",
       "host": [
         "http://auth:8000"
       ]

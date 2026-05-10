@@ -1,12 +1,6 @@
-{
-  "alg": "RS256",
-  "jwk_url": "{{ env "JWKS_URL" | default "http://auth:8000/api/auth/.well-known/jwks.json" }}",
-  "disable_jwk_security": {{ if eq (env "LORELOUNGE_ENV") "prod" }}false{{ else }}true{{ end }},
-  "cache": true,
-  "cookie_name": "access_token",
-  "propagate_claims": [
-    ["sub", "x-user-id"],
-    ["role", "x-user-role"],
-    ["email", "x-user-email"]
-  ]
-}
+{{- $env := env "LORELOUNGE_ENV" -}}
+{{- if eq $env "prod" -}}
+{"alg": "RS256", "jwk_url": "{{ env "JWKS_URL" }}", "disable_jwk_security": false, "cache": true, "cookie_name": "access_token", "propagate_claims": [["sub", "x-user-id"], ["role", "x-user-role"], ["email", "x-user-email"]]}
+{{- else -}}
+{"alg": "RS256", "jwk_url": "http://auth:8000/api/auth/.well-known/jwks.json", "disable_jwk_security": true, "cache": true, "cookie_name": "access_token", "propagate_claims": [["sub", "x-user-id"], ["role", "x-user-role"], ["email", "x-user-email"]]}
+{{- end -}}

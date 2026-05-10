@@ -2,13 +2,13 @@
     "endpoint": "/api/auth/me",
     "method": "GET",
     "output_encoding": "no-op",
-    "input_headers": {{ include "partials/headers-standard.tmpl" }},
+    "input_headers": {{ template "headers-standard.tmpl" . }},
     "extra_config": {
-      "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+      "auth/validator": {{ template "jwt-validator.tmpl" . }}
     },
     "backend": [
       {
-        "url_pattern": "/api/auth/me",
+        "url_pattern": "/auth/me",
         "host": ["http://auth:8000"]
       }
     ]
@@ -17,13 +17,13 @@
     "endpoint": "/api/auth/me",
     "method": "DELETE",
     "output_encoding": "no-op",
-    "input_headers": {{ include "partials/headers-standard.tmpl" }},
+    "input_headers": {{ template "headers-standard.tmpl" . }},
     "extra_config": {
-      "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+      "auth/validator": {{ template "jwt-validator.tmpl" . }}
     },
     "backend": [
       {
-        "url_pattern": "/api/auth/me",
+        "url_pattern": "/auth/me",
         "host": ["http://auth:8000"]
       }
     ]
@@ -32,13 +32,13 @@
     "endpoint": "/api/auth/role-request",
     "method": "POST",
     "output_encoding": "no-op",
-    "input_headers": {{ include "partials/headers-post.tmpl" }},
+    "input_headers": {{ template "headers-post.tmpl" . }},
     "extra_config": {
-      "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+      "auth/validator": {{ template "jwt-validator.tmpl" . }}
     },
     "backend": [
       {
-        "url_pattern": "/api/auth/role-request",
+        "url_pattern": "/auth/role-request",
         "host": ["http://auth:8000"]
       }
     ]
@@ -47,13 +47,13 @@
     "endpoint": "/api/auth/role-requests/",
     "method": "GET",
     "output_encoding": "no-op",
-    "input_headers": {{ include "partials/headers-standard.tmpl" }},
+    "input_headers": {{ template "headers-standard.tmpl" . }},
     "extra_config": {
-      "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+      "auth/validator": {{ template "jwt-validator.tmpl" . }}
     },
     "backend": [
       {
-        "url_pattern": "/api/auth/role-requests/",
+        "url_pattern": "/auth/role-requests/",
         "host": ["http://auth:8000"]
       }
     ]
@@ -62,13 +62,13 @@
     "endpoint": "/api/auth/role-requests/{request_id}/approve",
     "method": "POST",
     "output_encoding": "no-op",
-    "input_headers": {{ include "partials/headers-standard.tmpl" }},
+    "input_headers": {{ template "headers-standard.tmpl" . }},
     "extra_config": {
-      "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+      "auth/validator": {{ template "jwt-validator.tmpl" . }}
     },
     "backend": [
       {
-        "url_pattern": "/api/auth/role-requests/{request_id}/approve",
+        "url_pattern": "/auth/role-requests/{request_id}/approve",
         "host": ["http://auth:8000"]
       }
     ]
@@ -77,13 +77,13 @@
     "endpoint": "/api/auth/role-requests/{request_id}/reject",
     "method": "POST",
     "output_encoding": "no-op",
-    "input_headers": {{ include "partials/headers-standard.tmpl" }},
+    "input_headers": {{ template "headers-standard.tmpl" . }},
     "extra_config": {
-      "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+      "auth/validator": {{ template "jwt-validator.tmpl" . }}
     },
     "backend": [
       {
-        "url_pattern": "/api/auth/role-requests/{request_id}/reject",
+        "url_pattern": "/auth/role-requests/{request_id}/reject",
         "host": ["http://auth:8000"]
       }
     ]
@@ -92,13 +92,13 @@
     "endpoint": "/api/auth/password-change",
     "method": "POST",
     "output_encoding": "no-op",
-    "input_headers": {{ include "partials/headers-post.tmpl" }},
+    "input_headers": {{ template "headers-post.tmpl" . }},
     "extra_config": {
-      "auth/validator": {{ include "partials/jwt-validator.tmpl" }}
+      "auth/validator": {{ template "jwt-validator.tmpl" . }}
     },
     "backend": [
       {
-        "url_pattern": "/api/auth/password-change",
+        "url_pattern": "/auth/password-change",
         "host": ["http://auth:8000"]
       }
     ]
