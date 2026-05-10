@@ -37,7 +37,12 @@
 ## Архитектура
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+---
+config:
+  flowchart:
+    defaultRenderer: elk
+  layout: dagre
+---
 flowchart LR
     %% --- Legend / Layout ---
     classDef gateway stroke:#818cf8,fill:#1e1b4b,color:#fff;
@@ -47,29 +52,24 @@ flowchart LR
     classDef broker stroke:#f87171,fill:#450a0a,color:#fff;
     classDef external stroke:#a78bfa,fill:#2e1065,color:#fff;
 
-    %% --- External / Entry point ---
     Browser(["🌐 Браузер<br/><small>Пользовательский интерфейс, который обращается к приложению</small>"])
     class Browser external
 
-    %% --- Gateway Layer ---
     subgraph gateway_layer["gateway_layer"]
         Nginx["Nginx<br/><small>HTTP маршрутизация и отдача статических файлов</small>"]
         KrakenD["KrakenD API Gateway<br/><small>Агрегация и передача запросов к микросервисам</small>"]
     end
 
-    %% --- Frontend Layer ---
     subgraph frontend_layer["frontend_layer"]
         Frontend["Next.js<br/><small>SSR/SPA клиентская часть приложения</small>"]
     end
 
-    %% --- Services Layer ---
     subgraph services_layer["services_layer"]
         Auth["Auth (FastAPI)<br/><small>Регистрация, вход, JWT токены</small>"]
         Profile["Profile (FastAPI)<br/><small>Хранение информации о пользователе</small>"]
         Notification["Notification (FastStream)<br/><small>Обработка и рассылка событий</small>"]
     end
 
-    %% --- Storage Layer ---
     subgraph storage_layer["storage_layer"]
         PGAuth["Postgres Auth<br/><small>База данных авторизации</small>"]
         PGProfile["Postgres Profile<br/><small>База данных профилей</small>"]
@@ -77,19 +77,16 @@ flowchart LR
         MinIO["MinIO<br/><small>Хранение медиа и аватаров</small>"]
     end
 
-    %% --- Broker Layer ---
     subgraph broker_layer["broker_layer"]
         RabbitMQ["RabbitMQ<br/><small>Обмен событиями между сервисами</small>"]
     end
 
-    %% Add classes
     class Nginx,KrakenD gateway
     class Frontend frontend
     class Auth,Profile,Notification services
     class PGAuth,RedisAuth,PGProfile,MinIO storage
     class RabbitMQ broker
 
-    %% --- Connections ---
     Browser -->|"HTTP :80"| Nginx
     Nginx -->|"/*"| Frontend
     Nginx -->|"/api/*"| KrakenD
