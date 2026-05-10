@@ -1,102 +1,96 @@
 # Auth Service
 
-Микросервис аутентификации и авторизации LoreLounge.
+Микросервис аутентификации и авторизации LoreLounge. Реализован с использованием принципов **Clean Architecture**.
 
 ## Назначение
 
-- Регистрация пользователей.
-- Вход и выдача `access`/`refresh` JWT в http-only cookies.
-- Обновление `access` по `refresh`.
-- Выход (logout) с отзывом refresh-токена через Redis.
-- Выдача JWKS для KrakenD.
-- Сброс пароля (request/confirm) с отправкой email через RabbitMQ.
-- Управление ролями пользователей и заявками на изменение ролей.
+- Регистрация и аутентификация пользователей.
+- Выдача `access`/`refresh` JWT токенов в http-only cookies.
+- Обновление сессий (Refresh Token Rotate).
+- Отзыв токенов при выходе (Logout) через Redis.
+- Публикация JWKS для валидации токенов на шлюзе (KrakenD).
+- Сброс пароля через email-уведомления (RabbitMQ) с таймером валидности.
+- Безопасная смена пароля авторизованным пользователем.
+- Управление ролями и заявками на изменение прав доступа.
 
 ## Технологический стек
 
-- **Ядро**: FastAPI + Pydantic Settings.
-- **JWT**: RS256, публичный ключ отдаётся через `/.well-known/jwks.json`.
-- **Хранилище**: PostgreSQL (основные сущности), Redis (revoked refresh tokens).
-- **Брокер**: RabbitMQ (уведомления о сбросе пароля).
+- **Ядро**: FastAPI + Pydantic v2 (Settings, Validation).
+- **Безопасность**: RS256 JWT, хеширование паролей (bcrypt/argon2).
+- **База данных**: PostgreSQL (SQLAlchemy 2.0).
+- **Кеширование**: Redis (черный список токенов, кеш JWKS).
+- **Сообщения**: RabbitMQ (Publish/Subscribe для уведомлений).
 - **Миграции**: Alembic.
 
-## Структура папок
+## Структура проекта (Clean Architecture)
 
 ```text
-auth/
-├── certs/               # RSA ключи (private.pem, public.pem)
-├── migrations/          # Alembic миграции
-├── src/
-│   ├── api/             # Маршруты и обработчики исключений
-│   │   ├── router/      # Группировка эндпоинтов
-│   │   │   ├── auth/    # login, register, refresh, logout
-│   │   │   ├── password/# password reset
-│   │   │   └── roles/   # role requests
-│   │   └── exception_handlers.py
-│   ├── core/            # Конфигурация, безопасность (JWT logic)
-│   │   ├── config.py
-│   │   ├── security.py
-│   │   └── types.py
-│   ├── domain/          # Бизнес-логика и сущности (Clean Architecture)
-│   │   ├── entity/      # services.py, schemas.py, repository.py (интерфейс)
-│   │   ├── role_requests/ # services.py, schemas.py, repository.py
-│   │   └── common/      # interfaces.py, enums.py, exceptions.py
-│   ├── infrastructure/  # Внешние зависимости
-│   │   ├── broker/      # rabbitmq.py
-│   │   ├── cache/       # redis.py
-│   │   └── db/          # models.py, session.py, repositories/
-│   └── main.py          # Точка входа FastAPI
-├── alembic.ini          # Конфиг Alembic
-├── Dockerfile           # Инструкции для сборки контейнера
-└── requirements.txt     # Зависимости Python
+auth/src/
+├── api/                     # Уровень представления (Delivery)
+│   ├── routers/             # Маршруты FastAPI (auth, roles, password)
+│   ├── schemas/             # DTO (Pydantic модели для API)
+│   ├── dependencies/        # DI (зависимости для эндпоинтов)
+│   └── handlers/            # Обработчики доменных исключений -> HTTP
+├── domain/                  # Ядро бизнеса (Pure Python)
+│   ├── services/            # Бизнес-логика (AuthServices, RoleServices)
+│   ├── exceptions/          # Доменные исключения (UserNotFoundError и др.)
+│   ├── enums.py             # Перечисления (Roles)
+│   └── interfaces.py        # Интерфейсы репозиториев и сервисов
+├── infrastructure/          # Реализация внешних зависимостей
+│   ├── db/                  # SQLAlchemy модели и репозитории
+│   ├── cache/               # Логика работы с Redis
+│   └── broker/              # Интеграция с RabbitMQ
+├── config/                  # Глобальная конфигурация приложения
+└── main.py                  # Точка входа и сборка приложения
 ```
 
-## Основные endpoints (под `/api/auth`)
+## API Endpoints (префикс `/api/auth`)
 
 | Метод | Путь | Доступ | Описание |
 |-------|------|:------:|---------|
-| POST | `/register` | public | Регистрация |
-| POST | `/login` | public | Вход (выдаёт JWT cookies) |
-| POST | `/logout` | public | Выход (отзывает refresh) |
-| POST | `/refresh` | public | Обновление access-токена |
-| POST | `/password-reset-request` | public | Запрос сброса пароля |
-| POST | `/password-reset-confirm` | public | Подтверждение сброса пароля |
-| GET | `/me` | 🔒 JWT | Данные текущего пользователя |
-| POST | `/role-request` | 🔒 JWT | Заявка на изменение роли |
-| GET | `/role-requests/` | 🔒 JWT | Список заявок на роль |
-| POST | `/role-requests/{id}/approve` | 🔒 JWT | Одобрить заявку |
-| POST | `/role-requests/{id}/reject` | 🔒 JWT | Отклонить заявку |
-| GET | `/.well-known/jwks.json` | public | Публичный ключ (JWKS) |
+| POST  | `/register` | Public | Регистрация нового аккаунта |
+| POST  | `/login` | Public | Вход (установка cookies) |
+| POST  | `/logout` | Public | Выход (аннулирование сессии) |
+| POST  | `/refresh` | Public | Продление access-токена |
+| GET   | `/.well-known/jwks.json` | Public | Публичные ключи для KrakenD |
+| GET   | `/me` | 🔒 JWT | Данные профиля текущего пользователя |
+| POST  | `/password-reset-request` | Public | Запрос ссылки на сброс пароля |
+| GET   | `/password-reset-check` | Public | Проверка токена и времени жизни |
+| POST  | `/password-reset-confirm` | Public | Установка нового пароля по токену |
+| POST  | `/password-change` | 🔒 JWT | Смена пароля (требует текущий) |
+| POST  | `/role-request` | 🔒 JWT | Заявка на получение новой роли |
+| GET   | `/role-requests/` | 🔒 JWT | Просмотр активных заявок |
+| POST  | `/role-requests/{id}/approve` | Admin | Утверждение роли |
 
-## Реальный logout (refresh revoke)
+## Особенности реализации
 
-- При logout refresh-токен сохраняется в Redis в виде `revoked:refresh:{jti}`.
-- TTL равен оставшемуся времени жизни refresh-токена.
-- При `POST /refresh` проверяется Redis: если `jti` отозван, возвращается 401.
-- Access-токен живёт до своего TTL (короткий срок).
+### Безопасность
+- **JWT RS256**: Токены подписываются приватным ключом. Публичный ключ доступен по стандарту JWKS, что позволяет API-шлюзу валидировать запросы без обращения к сервису auth.
+- **Revocation List**: При логауте `jti` refresh-токена попадает в Redis с TTL, равным сроку жизни токена.
 
-## JWT и cookies
+### Сброс пароля
+- Токены сброса имеют ограниченный срок жизни (30 минут).
+- Фронтенд использует эндпоинт `/password-reset-check` для отображения таймера обратного отсчета до истечения ссылки.
 
-- Cookies: `access_token`, `refresh_token`.
-- Access TTL задаётся `CONFIG__AUTH__ACCESS_EXPIRE_MIN`.
+### Инфраструктура
+- Сервис полностью контейнеризирован.
+- Логирование настроено через стандартный `logging`.
+- Переменные окружения строго типизированы через Pydantic.
 
-## Конфигурация (.env)
+## Разработка
 
-Примеры (см. `.env.example`):
+1. **Миграции**:
+   ```bash
+   # Создать миграцию
+   alembic revision --autogenerate -m "description"
+   # Применить
+   alembic upgrade head
+   ```
 
-- `CONFIG__DB__URL` — PostgreSQL URL.
-- `CONFIG__AUTH__ACCESS_EXPIRE_MIN` — TTL access (минуты).
-- `CONFIG__AUTH__REFRESH_EXPIRE_DAYS` — TTL refresh (дни).
-- `CONFIG__REDIS__URL` — Redis URL (revoked refresh tokens).
-- `CONFIG__FRONTEND_URL` — URL фронтенда для reset-ссылок.
-- `CONFIG__RUN__SHOW_DOCS=True` — включить Swagger.
+2. **Запуск тестов**:
+   ```bash
+   pytest
+   ```
 
-## Запуск (Docker)
-
-```bash
-# из корня проекта
-make up
-```
-
-Сервис доступен через Nginx и KrakenD:
-- `http://localhost/api/auth/*`
+3. **RSA Ключи**:
+   Для работы JWT необходимы `private.pem` и `public.pem` в папке `certs/` (или настроены пути через ENV).
