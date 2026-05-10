@@ -5,22 +5,7 @@ import { useRouter } from "next/navigation";
 import { Bell, Lock, ShieldBan, UserRound, ArrowLeft, X, ChevronLeft, ChevronRight, ChevronDown, Loader2, ImageIcon, Camera } from "lucide-react";
 import Header from "@/components/Header";
 import { apiFetchJson } from "@/lib/apiClient";
-
-type UserProfile = {
-  id: string;
-  email: string;
-  role: string;
-};
-
-type ProfileData = {
-  name: string;
-  bio: string | null;
-  avatar_url: string | null;
-  birth_date: string | null;
-  gender: Gender | null;
-};
-
-type Gender = "unspecified" | "male" | "female";
+import type { User, Profile, Gender } from "@/types";
 
 const RU_MONTHS = [
   "январь",
@@ -49,7 +34,7 @@ export default function ProfileSettingsPage() {
   const [deleteModalRendered, setDeleteModalRendered] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [nickname, setNickname] = useState("");
   const [about, setAbout] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -69,7 +54,7 @@ export default function ProfileSettingsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const me = await apiFetchJson<UserProfile>("/auth/me");
+        const me = await apiFetchJson<User>("/auth/me");
         if (!me.ok) {
           router.push("/");
           return;
@@ -77,7 +62,7 @@ export default function ProfileSettingsPage() {
 
         setUser(me.data);
 
-        const profile = await apiFetchJson<ProfileData>("/profile/me");
+        const profile = await apiFetchJson<Profile>("/profile/me");
         if (profile.ok) {
           setNickname(profile.data.name ?? "");
           setAbout(profile.data.bio ?? "");

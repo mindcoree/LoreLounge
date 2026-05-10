@@ -5,17 +5,7 @@ import { useRouter } from "next/navigation";
 import { Bell, Lock, ShieldBan, UserRound, ArrowLeft, KeyRound, Eye, EyeOff } from "lucide-react";
 import Header from "@/components/Header";
 import { apiFetchJson } from "@/lib/apiClient";
-
-type UserProfile = {
-  id: string;
-  email: string;
-  role: string;
-};
-
-type ProfileData = {
-  name: string;
-  avatar_url: string | null;
-};
+import type { User, Profile } from "@/types";
 
 export default function SecuritySettingsPage() {
   const router = useRouter();
@@ -24,7 +14,7 @@ export default function SecuritySettingsPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [nickname, setNickname] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState(false);
@@ -40,7 +30,7 @@ export default function SecuritySettingsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const me = await apiFetchJson<UserProfile>("/auth/me");
+        const me = await apiFetchJson<User>("/auth/me");
         if (!me.ok) {
           router.push("/");
           return;
@@ -48,7 +38,7 @@ export default function SecuritySettingsPage() {
 
         setUser(me.data);
 
-        const profile = await apiFetchJson<ProfileData>("/profile/me");
+        const profile = await apiFetchJson<Profile>("/profile/me");
         if (profile.ok) {
           setNickname(profile.data.name ?? "");
           if (profile.data.avatar_url) {

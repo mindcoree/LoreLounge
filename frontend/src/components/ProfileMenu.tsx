@@ -19,65 +19,17 @@ import {
   Ticket,
   Zap,
 } from "lucide-react";
-import { apiFetchJson } from "@/lib/apiClient";
 import { useRouter } from "next/navigation";
-
-interface UserProfile {
-  id: string;
-  email: string;
-  role: string;
-  coins?: number;
-}
-
-interface ProfileInfo {
-  name: string;
-  avatar_url: string | null;
-}
+import { useUser } from "@/hooks/useUser";
+import { Avatar } from "@/components/ui/Avatar";
 
 const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout?: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [darkThemeOn, setDarkThemeOn] = useState(true);
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [profileName, setProfileName] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [avatarError, setAvatarError] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { user, profile, avatarUrl, avatarError, loading, refetch, logout } = useUser();
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const fetchUser = async () => {
-      setLoading(true);
-      try {
-        const [authResult, profileResult] = await Promise.all([
-          apiFetchJson<UserProfile>("/auth/me"),
-          apiFetchJson<ProfileInfo>("/profile/me"),
-        ]);
-
-        if (authResult.ok) {
-          setUser(authResult.data);
-        }
-
-        if (profileResult.ok && profileResult.data.name?.trim()) {
-          setProfileName(profileResult.data.name.trim());
-        } else {
-          setProfileName(null);
-        }
-
-        if (profileResult.ok && profileResult.data.avatar_url) {
-          setAvatarUrl(profileResult.data.avatar_url);
-          setAvatarError(false);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [isAuthenticated]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,16 +46,11 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
   }, [isOpen]);
 
   const handleLogout = async () => {
-    try {
-      await apiFetchJson("/auth/logout", { method: "POST" });
-      setUser(null);
-      setIsOpen(false);
-      setMoreOpen(false);
-      onLogout?.();
-      router.push("/");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    setIsOpen(false);
+    setMoreOpen(false);
+    await logout();
+    onLogout?.();
+    router.push("/");
   };
 
   const handleProfileClick = () => {
@@ -112,55 +59,24 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
     router.push("/profile");
   };
 
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated || loading) {
     return null;
   }
 
-  const initials = user.email.charAt(0).toUpperCase();
-  const coins = user.coins ?? 0;
-  const greenCount = 0;
-  const lightning = 40;
-  const displayName = profileName || user.email;
+  const initials = profile?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U";
+  const displayName = profile?.name || user?.email || "Пользователь";
 
   return (
     <div ref={menuRef} className="relative">
       <button
-        onClick={async () => {
-          if (!isOpen) {
-            setLoading(true);
-            const [authResult, profileResult] = await Promise.all([
-              apiFetchJson<UserProfile>("/auth/me"),
-              apiFetchJson<ProfileInfo>("/profile/me"),
-            ]);
-            if (authResult.ok) setUser(authResult.data);
-            if (profileResult.ok) {
-              if (profileResult.data.name?.trim()) setProfileName(profileResult.data.name.trim());
-              if (profileResult.data.avatar_url) {
-                setAvatarUrl(profileResult.data.avatar_url);
-                setAvatarError(false);
-              }
-            }
-            setLoading(false);
-            setIsOpen(true);
-          } else {
-            setIsOpen(false);
-          }
+        onClick={() => {
+          if (!isOpen) refetch();
+          setIsOpen((value) => !value);
         }}
         className="flex items-center gap-2 rounded-full p-2 transition-colors hover:bg-[#1a1a1a]"
         aria-label="Профиль"
       >
-        {avatarUrl && !avatarError ? (
-            <img
-              src={avatarUrl}
-              alt="Аватар"
-              className="h-10 w-10 rounded-full object-cover"
-              onError={() => setAvatarError(true)}
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-sm font-bold text-white">
-              {initials}
-            </div>
-          )}
+        <Avatar src={avatarUrl} fallback={initials} size="md" />
         {isOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
       </button>
 
@@ -171,54 +87,18 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
             className="mx-3 mt-3 rounded-[22px] border border-white/10 bg-[#202020] p-4 text-left transition-colors hover:bg-white/[0.035]"
           >
             <div className="flex items-start gap-4">
-              <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#b8d9a8] to-[#6fb59a] text-2xl font-bold text-white overflow-hidden">
-                {avatarUrl && !avatarError ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Аватар"
-                    className="h-full w-full object-cover"
-                    onError={() => setAvatarError(true)}
-                  />
-                ) : (
-                  initials
-                )}
-                <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full border-2 border-[#202020] bg-emerald-400" />
-              </div>
-
+              <Avatar src={avatarUrl} fallback={initials} size="xl" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[19px] font-semibold leading-6 text-white">{displayName}</p>
-
                 <div className="mt-6 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-[17px] font-semibold text-white">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#ffcc33] text-[#111111] shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)]">
                       <span className="text-[13px] leading-none">●</span>
                     </span>
-                    <span>{coins} монет</span>
+                    <span>{user?.coins ?? 0} монет</span>
                   </div>
-
                   <button className="rounded-full bg-[#3f83f8] px-6 py-2.5 text-[16px] font-semibold text-white transition-colors hover:bg-[#3274ea]">
                     Пополнить
-                  </button>
-                </div>
-
-                <div className="mt-5 flex items-center justify-between">
-                  <div className="flex items-center gap-3 rounded-full bg-[#2c2c2c] px-5 py-2 text-[16px] text-white/92">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-500/90 text-[12px] text-[#111]">
-                      <Ticket size={13} />
-                    </span>
-                    <span>{greenCount}</span>
-                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[#f59e0b] text-[#111]">
-                      <Zap size={13} />
-                    </span>
-                    <span>{lightning}</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-[#2c2c2c] text-white/90 transition-colors hover:bg-[#353535]"
-                    aria-label="Переключить аккаунт"
-                  >
-                    <Repeat2 size={22} />
                   </button>
                 </div>
               </div>
@@ -242,14 +122,10 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
             <MenuItem icon={<History size={18} />} label="История чтения" />
             <MenuItem icon={<BadgePlus size={18} />} label="Мои заявки" />
             <MenuItem icon={<Settings size={18} />} label="Добавить контент" hasChevron />
-
             <div className="my-2 border-t border-white/10" />
-
             <MenuItem icon={<ShoppingBag size={18} />} label="Магазин" />
             <MenuItem icon={<ReceiptText size={18} />} label="Транзакции" />
-
             <div className="my-2 border-t border-white/10" />
-
             <button
               type="button"
               onClick={() => setMoreOpen((value) => !value)}
@@ -258,11 +134,9 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
               <span>Другое</span>
               {moreOpen ? <ChevronUp size={18} className="text-white/70" /> : <ChevronDown size={18} className="text-white/70" />}
             </button>
-
             {moreOpen ? (
               <div className="mt-1 rounded-[18px] border border-white/10 bg-[#202020] px-1.5 py-1.5">
                 <MenuItem icon={<Settings size={18} />} label="Настройки" />
-
                 <div className="flex w-full items-center justify-between rounded-xl px-6 py-3.5 text-[17px] text-white/80 transition-colors hover:bg-white/5 hover:text-white">
                   <span className="flex items-center gap-3">
                     <Moon size={18} className="text-gray-400" />
@@ -272,16 +146,10 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
                     type="button"
                     onClick={() => setDarkThemeOn((value) => !value)}
                     className={`relative h-8 w-14 rounded-full transition-colors ${darkThemeOn ? "bg-[#3f83f8]" : "bg-white/15"}`}
-                    aria-label="Переключить тему"
                   >
-                    <span
-                      className={`absolute top-1 h-6 w-6 rounded-full bg-[#0f1115] shadow-md transition-transform ${
-                        darkThemeOn ? "translate-x-7" : "translate-x-1"
-                      }`}
-                    />
+                    <span className={`absolute top-1 h-6 w-6 rounded-full bg-[#0f1115] shadow-md transition-transform ${darkThemeOn ? "translate-x-7" : "translate-x-1"}`} />
                   </button>
                 </div>
-
                 <MenuItem icon={<MessageCircle size={18} />} label="Обратная связь" />
                 <MenuItem icon={<BookOpenText size={18} />} label="Пройти гайд" />
                 <MenuItem icon={<RotateCcw size={18} />} label="Вернуться на старую версию" />
@@ -291,8 +159,7 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
 
           <button
             onClick={handleLogout}
-            disabled={loading}
-            className="flex w-full items-center justify-between border-t border-white/10 px-6 py-5 text-[16px] text-red-500 transition-colors hover:bg-white/5 hover:text-red-400 disabled:opacity-50"
+            className="flex w-full items-center justify-between border-t border-white/10 px-6 py-5 text-[16px] text-red-500 transition-colors hover:bg-white/5 hover:text-red-400"
           >
             <span>Выйти</span>
             <LogOut size={20} />

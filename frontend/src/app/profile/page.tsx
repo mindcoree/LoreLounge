@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   LogOut,
   ChevronRight,
-  ChevronDown,
   Search,
   Settings,
   Layers3,
@@ -17,27 +16,12 @@ import {
   LayoutList,
   SquareDashedMousePointer,
 } from "lucide-react";
-import { apiFetchJson } from "@/lib/apiClient";
+import { useUser } from "@/hooks/useUser";
+import { Avatar } from "@/components/ui/Avatar";
 import Header from "@/components/Header";
 
-interface UserProfile {
-  id: string;
-  email: string;
-  role: string;
-  coins?: number;
-}
-
-interface ProfileInfo {
-  name: string;
-  avatar_url: string | null;
-}
-
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [profileName, setProfileName] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [avatarError, setAvatarError] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading, refetch } = useUser();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -55,49 +39,18 @@ export default function ProfilePage() {
     }
   }, [moreOpen]);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const [authResult, profileResult] = await Promise.all([
-          apiFetchJson<UserProfile>("/auth/me"),
-          apiFetchJson<ProfileInfo>("/profile/me"),
-        ]);
-
-        if (authResult.ok) {
-          setUser(authResult.data);
-          if (profileResult.ok && profileResult.data.name?.trim()) {
-            setProfileName(profileResult.data.name.trim());
-          } else {
-            setProfileName(null);
-          }
-          if (profileResult.ok && profileResult.data.avatar_url) {
-            setAvatarUrl(profileResult.data.avatar_url);
-            setAvatarError(false);
-          }
-        } else {
-          router.push("/");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [router]);
-
   const handleLogout = async () => {
-    try {
-      await apiFetchJson("/auth/logout", { method: "POST" });
-      router.push("/");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    router.push("/");
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0d0d0d] text-white flex items-center justify-center">
-        <div className="text-gray-400">Загрузка...</div>
+      <div className="min-h-screen bg-[#0d0d0d] text-white">
+        <Header onOpenAuth={() => undefined} />
+        <div className="mx-auto max-w-[1280px] px-4 py-10">
+          <div className="rounded-2xl border border-white/10 bg-[#171717] p-6 min-h-[300px]" />
+        </div>
       </div>
     );
   }
@@ -106,26 +59,11 @@ export default function ProfilePage() {
     return null;
   }
 
-  const displayName = profileName || user.email.split("@")[0];
+  const displayName = profile?.name || user.email.split("@")[0] || "Пользователь";
   const initials = displayName.charAt(0).toUpperCase();
-  const coins = user.coins ?? 0;
 
-  const tabs = [
-    "Тайтлы",
-    "Комментарии",
-    "Отзывы",
-    "Избранное",
-    "Друзья",
-    "История просмотров",
-  ];
-
-  const moreTabs = [
-    "История банов",
-    "Личные сообщения",
-    "Добавленные тайтлы",
-    "Добавленные главы",
-  ];
-
+  const tabs = ["Тайтлы", "Комментарии", "Отзывы", "Избранное", "Друзья", "История просмотров"];
+  const moreTabs = ["История банов", "Личные сообщения", "Добавленные тайтлы", "Добавленные главы"];
   const lists = [
     { label: "Все", count: 0, active: false },
     { label: "Читаю", count: 0, active: true },
@@ -134,14 +72,12 @@ export default function ProfilePage() {
     { label: "Прочитано", count: 0, active: false },
     { label: "Любимые", count: 0, active: false },
   ];
-
   const sideActions = [
     { icon: BookOpenText, label: "Тайтлы" },
     { icon: MessagesSquare, label: "Комментарии" },
     { icon: Layers3, label: "Коллекции" },
     { icon: Star, label: "Отзывы" },
   ];
-
   const sortItems = [
     { label: "По названию (A-Z)", active: true },
     { label: "По названию (A-Я)", active: false },
@@ -161,18 +97,7 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-5 p-5 md:flex-row md:items-start md:justify-between md:p-6">
             <div className="flex items-start gap-4">
               <div className="relative">
-                {avatarUrl && !avatarError ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Аватар"
-                    className="h-16 w-16 rounded-xl object-cover shadow-lg shadow-black/20 md:h-20 md:w-20"
-                    onError={() => setAvatarError(true)}
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#b7d4ff] to-[#6fc3a2] text-3xl font-bold text-white shadow-lg shadow-black/20 md:h-20 md:w-20">
-                    {initials}
-                  </div>
-                )}
+                <Avatar src={profile?.avatar_url} fallback={initials} size="xl" className="shadow-lg shadow-black/20" />
                 <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full border-2 border-[#171717] bg-emerald-400" />
               </div>
 
@@ -220,9 +145,7 @@ export default function ProfilePage() {
                 }`}
               >
                 {tab}
-                {index === 0 ? (
-                  <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-sky-500" />
-                ) : null}
+                {index === 0 ? <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-sky-500" /> : null}
               </button>
             ))}
 
@@ -231,7 +154,6 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => setMoreOpen((value) => !value)}
                 className="relative px-3 py-4 text-sm text-white/55 transition-colors hover:text-white md:px-4"
-                aria-label="Открыть дополнительные разделы"
               >
                 ...
               </button>
@@ -281,7 +203,6 @@ export default function ProfilePage() {
                   <span className="text-white/40">{item.count}</span>
                 </button>
               ))}
-
               <button className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm text-white/35 transition-colors hover:bg-white/5 hover:text-white/70">
                 <span>Редактировать...</span>
                 <PencilLine size={14} />
@@ -307,7 +228,7 @@ export default function ProfilePage() {
 
             <div className="mt-5 border-t border-white/10 pt-4">
               <div className="mb-3 flex items-center gap-2 text-sm text-white/70">
-                <ChevronDown size={15} />
+                <span className="rotate-90">→</span>
                 Сортировка
               </div>
               <div className="space-y-2">
@@ -363,7 +284,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="mt-5 rounded-xl border border-white/10 bg-[#111111] px-4 py-3 text-xs text-white/45">
-              Coins: {coins} · LoreLounge v1.0 · {user.email}
+              Coins: {user.coins ?? 0} · LoreLounge v1.0 · {user.email}
             </div>
           </section>
         </div>

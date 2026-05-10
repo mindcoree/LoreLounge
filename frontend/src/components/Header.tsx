@@ -1,58 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Search, Bell, MoreHorizontal, LayoutGrid, Trophy, MessageSquare, ChevronDown, Menu } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
-import { apiFetchJson } from "@/lib/apiClient";
-
-interface UserData {
-  id: string;
-  email: string;
-}
-
-interface ProfileData {
-  name: string;
-  avatar_url: string | null;
-}
+import { useUser } from "@/hooks/useUser";
+import { Avatar } from "@/components/ui/Avatar";
 
 const Header = ({ onOpenAuth }: { onOpenAuth?: () => void }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<UserData | null>(null);
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-
-  // Проверяем аутентификацию при загрузке
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const [authResult, profileResult] = await Promise.all([
-          apiFetchJson<UserData>("/auth/me"),
-          apiFetchJson<ProfileData>("/profile/me"),
-        ]);
-        if (authResult.ok) {
-          setUser(authResult.data);
-          setIsAuthenticated(true);
-        }
-        if (profileResult.ok) {
-          setProfile(profileResult.data);
-        }
-      } finally {
-        setCheckingAuth(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  const handleLogout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-  };
+  const { user, loading } = useUser();
+  const isAuthenticated = !!user;
 
   return (
     <header className="w-full bg-[#0d0d0d] text-white sticky top-0 z-50">
       <div className="max-w-[1440px] mx-auto w-full px-4 py-3 flex items-center justify-between gap-2">
-        
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer transition-transform active:scale-95">
             <span className="text-black font-bold text-xl leading-none">L</span>
@@ -64,12 +24,10 @@ const Header = ({ onOpenAuth }: { onOpenAuth?: () => void }) => {
               <span>Каталог</span>
               <ChevronDown size={14} className="ml-1 opacity-50" />
             </button>
-            
             <button className="relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-medium subpixel-antialiased transition-all tap-highlight-transparent rounded-full h-9 text-sm text-gray-300 bg-[#1a1a1a] hover:bg-[#252525] data-[pressed=true]:scale-[0.97] py-2 px-5">
               <Trophy size={18} className="mr-2" />
               <span>Топы</span>
             </button>
-            
             <button className="relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-medium subpixel-antialiased transition-all tap-highlight-transparent rounded-full h-9 text-sm text-gray-300 bg-[#1a1a1a] hover:bg-[#252525] data-[pressed=true]:scale-[0.97] py-2 px-5">
               <MessageSquare size={18} className="mr-2" />
               <span>Форум</span>
@@ -104,9 +62,9 @@ const Header = ({ onOpenAuth }: { onOpenAuth?: () => void }) => {
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center group-hover:bg-blue-600 transition-colors">2</span>
           </button>
 
-          {!checkingAuth && (
+          {!loading && (
             isAuthenticated ? (
-              <ProfileMenu isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+              <ProfileMenu isAuthenticated={isAuthenticated} onLogout={() => {}} />
             ) : (
               <button 
                 onClick={onOpenAuth}
