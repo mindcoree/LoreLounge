@@ -10,5 +10,13 @@
     {{ include "endpoints/auth-protected.tmpl" }},
     {{ include "endpoints/profile-public.tmpl" }},
     {{ include "endpoints/profile-protected.tmpl" }}
-  ]
+  ],
+  "extra_config": {
+    "http/secure": {
+      "content_security_policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: http://localhost:9000; connect-src 'self' http://localhost http://localhost:8080;",
+      "content_type_nosniff": true,
+      "browser_xss_filter": true,
+      "frame_deny": true
+    }
+  }
 }

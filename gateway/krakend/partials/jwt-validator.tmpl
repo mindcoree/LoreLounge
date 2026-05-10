@@ -1,0 +1,12 @@
+{
+  "alg": "RS256",
+  "jwk_url": "{{ env "JWKS_URL" | default "http://auth:8000/api/auth/.well-known/jwks.json" }}",
+  "disable_jwk_security": {{ if eq (env "LORELOUNGE_ENV") "prod" }}false{{ else }}true{{ end }},
+  "cache": true,
+  "cookie_name": "access_token",
+  "propagate_claims": [
+    ["sub", "x-user-id"],
+    ["role", "x-user-role"],
+    ["email", "x-user-email"]
+  ]
+}
