@@ -40,12 +40,12 @@
 %%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
 flowchart LR
     %% --- Legend / Layout ---
-    classDef gateway stroke:#818cf8,fill:#eef2ff;
-    classDef frontend stroke:#38bdf8,fill:#f0f9ff;
-    classDef services stroke:#2dd4bf,fill:#f0fdfa;
-    classDef storage stroke:#a3e635,fill:#f7fee7;
-    classDef broker stroke:#f87171,fill:#fef2f2;
-    classDef external stroke:#a78bfa,fill:#f5f3ff;
+    classDef gateway stroke:#818cf8,fill:#1e1b4b,color:#fff;
+    classDef frontend stroke:#38bdf8,fill:#0c4a6e,color:#fff;
+    classDef services stroke:#2dd4bf,fill:#134e4a,color:#fff;
+    classDef storage stroke:#a3e635,fill:#365314,color:#fff;
+    classDef broker stroke:#f87171,fill:#450a0a,color:#fff;
+    classDef external stroke:#a78bfa,fill:#2e1065,color:#fff;
 
     %% --- External / Entry point ---
     Browser(["🌐 Браузер<br/><small>Пользовательский интерфейс, который обращается к приложению</small>"])
