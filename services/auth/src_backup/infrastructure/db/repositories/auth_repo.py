@@ -10,10 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
-from domain.interfaces import AbstractAuthRepository
+from domain.entity.repository import AbstractAuthRepository
 from infrastructure.db.models import AuthEntity, PasswordResetToken
-from api.schemas.auth import DomainAuthEntity, DomainPasswordResetToken
-from domain.exceptions import UserAlreadyExistsError
+from domain.entity.schemas import DomainAuthEntity, DomainPasswordResetToken
+from domain.common.exceptions import UserAlreadyExistsError
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class AuthSQLAlchemyRepository(AbstractAuthRepository):
             await self.session.commit()
         except IntegrityError:
             await self.session.rollback()
-            raise UserAlreadyExistsError(email=auth_data.get("email"))
+            raise UserAlreadyExistsError("Пользователь с таким email уже существует")
             
         await self.session.refresh(auth_entity)
         return _to_domain_entity(auth_entity)

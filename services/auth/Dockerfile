@@ -12,8 +12,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Исходный код
 COPY src/      ./src/
-COPY migrations/  ./migrations/
-COPY alembic.ini .
 
 # Copy startup script and make it executable
 COPY prestart.sh .

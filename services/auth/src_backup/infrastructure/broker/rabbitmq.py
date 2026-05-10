@@ -1,7 +1,7 @@
 import logging
 from faststream.rabbit import RabbitBroker
-from config.settings import settings
-from domain.interfaces import AbstractMessageBroker
+from core.config import settings
+from domain.common.interfaces import AbstractMessageBroker
 from typing import Any
 
 logger = logging.getLogger(__name__)

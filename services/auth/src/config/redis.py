@@ -1,0 +1,18 @@
+"""
+Redis configuration for auth service.
+"""
+
+from typing import final
+
+from pydantic import BaseModel, Field
+
+
+@final
+class RedisSettings(BaseModel):
+    """Redis connection settings for token revocation storage."""
+
+    url: str = Field(
+        default="redis://:redis_auth_secret@redis_auth:6379/0",
+        alias="URL",
+        description="Redis connection URL",
+    )

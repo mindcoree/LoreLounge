@@ -3,7 +3,7 @@
 set -e
 
 echo "Run apply migrations.."
-alembic upgrade head
+alembic -c src/infrastructure/db/alembic.ini upgrade head
 echo "Migrations applied"
 
 

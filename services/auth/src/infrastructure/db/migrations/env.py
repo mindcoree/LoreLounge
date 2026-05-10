@@ -18,11 +18,14 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # ── 1. Добавляем src/ в PYTHONPATH ───────────────────────────────────────────
-# Файл лежит в: services/auth/alembic/env.py
+# Файл лежит в: services/auth/src/infrastructure/db/migrations/env.py
 # src/ лежит в: services/auth/src/
-SERVICE_DIR = Path(__file__).parent.parent          # services/auth/
-SRC_DIR = SERVICE_DIR / "src"
-PROJECT_ROOT = SERVICE_DIR.parent.parent            # LoreLounge/
+MIGRATIONS_DIR = Path(__file__).parent  # migrations/
+DB_DIR = MIGRATIONS_DIR.parent  # db/
+INFRA_DIR = DB_DIR.parent  # infrastructure/
+SRC_DIR = INFRA_DIR.parent  # src/
+SERVICE_DIR = SRC_DIR.parent  # auth/
+PROJECT_ROOT = SERVICE_DIR.parent.parent  # LoreLounge/
 
 sys.path.insert(0, str(SRC_DIR))
 
@@ -47,8 +50,8 @@ if not os.environ.get("CONFIG__DB__URL"):
     )
 
 # ── 4. Импортируем настройки и модели ────────────────────────────────────────
-from core.config import settings
-from infrastructure.db.base import Base
+from config.settings import settings
+from infrastructure.db.models.base import Base
 import infrastructure.db.models  # noqa: F401, F403 — чтобы alembic видел таблицы
 
 
