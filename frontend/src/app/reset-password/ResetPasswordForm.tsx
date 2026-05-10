@@ -24,6 +24,9 @@ export default function ResetPasswordForm({ initialToken = "" }: ResetPasswordFo
   });
   const [result, setResult] = useState<unknown>(null);
   const [pending, setPending] = useState(false);
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
   const isSuccessResult = Boolean(
     result && typeof result === "object" && "ok" in result && (result as { ok: boolean }).ok,
   );
@@ -35,7 +38,7 @@ export default function ResetPasswordForm({ initialToken = "" }: ResetPasswordFo
         : (result as { error?: string }).error ?? "Ошибка"
       : null;
 
-  const canSubmit = Boolean(form.token && form.newPassword && form.repeatPassword);
+  const canSubmit = Boolean(form.token && form.newPassword && form.repeatPassword && timeLeft !== "Просрочено");
 
   useEffect(() => {
     if (form.token) return;
@@ -50,10 +53,52 @@ export default function ResetPasswordForm({ initialToken = "" }: ResetPasswordFo
     }
   }, [form.token]);
 
+  useEffect(() => {
+    if (!form.token) return;
+
+    const checkToken = async () => {
+      const res = await apiFetchJson<{ expires_at: string; valid: boolean }>(
+        `/auth/password-reset-check?token=${form.token}`,
+      );
+      if (res.ok && res.data.valid) {
+        setExpiresAt(new Date(res.data.expires_at));
+      } else {
+        setResult({ ok: false, error: "Ссылка недействительна или просрочена" });
+        setTimeLeft("Просрочено");
+      }
+    };
+
+    void checkToken();
+  }, [form.token]);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      const diff = expiresAt.getTime() - now.getTime();
+      if (diff <= 0) {
+        setTimeLeft("Просрочено");
+        setResult({ ok: false, error: "Срок действия ссылки истек" });
+        clearInterval(timer);
+      } else {
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(`${minutes}:${seconds < 10 ? "0" : ""}${seconds}`);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.token) {
       setResult({ ok: false, error: "Ссылка не содержит токен" });
+      return;
+    }
+    if (timeLeft === "Просрочено") {
+      setResult({ ok: false, error: "Срок действия ссылки истек" });
       return;
     }
     setPending(true);
@@ -121,8 +166,15 @@ export default function ResetPasswordForm({ initialToken = "" }: ResetPasswordFo
 
           <section className="rounded-[32px] border border-black/10 bg-white/80 p-6 shadow-[0_30px_80px_-60px_rgba(0,0,0,0.6)] backdrop-blur dark:border-white/10 dark:bg-white/5">
             <div className="space-y-2">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-black/50 dark:text-zinc-400">
-                Reset
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold uppercase tracking-[0.2em] text-black/50 dark:text-zinc-400">
+                  Reset
+                </div>
+                {timeLeft && (
+                  <div className={`text-xs font-mono font-medium ${timeLeft === "Просрочено" ? "text-red-500" : "text-black/40 dark:text-zinc-400"}`}>
+                    {timeLeft === "Просрочено" ? "Срок истек" : `Действителен: ${timeLeft}`}
+                  </div>
+                )}
               </div>
               <h2 className="text-2xl font-semibold">Сброс пароля</h2>
               <p className="text-sm text-black/60 dark:text-zinc-300">

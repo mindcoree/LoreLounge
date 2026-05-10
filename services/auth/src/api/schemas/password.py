@@ -5,6 +5,9 @@
 from pydantic import BaseModel, EmailStr, Field
 
 
+from datetime import datetime
+
+
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
@@ -17,6 +20,11 @@ class PasswordResetConfirm(BaseModel):
 
 class PasswordResetResponse(BaseModel):
     detail: str
+
+
+class PasswordResetCheckResponse(BaseModel):
+    expires_at: datetime
+    valid: bool
 
 
 class PasswordChangeRequest(BaseModel):

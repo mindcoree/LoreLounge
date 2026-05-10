@@ -248,6 +248,20 @@ class AuthServices:
         await self.repo.mark_reset_token_used(reset_token.id)
         return PasswordResetResponse(detail="Пароль успешно изменён")
 
+    async def password_reset_check(self, token: str) -> dict:
+        """Проверяет валидность токена и возвращает время истечения."""
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        reset_token = await self.repo.get_reset_token_by_hash(token_hash)
+        
+        if not reset_token or reset_token.used:
+            return {"valid": False, "expires_at": datetime.now(timezone.utc)}
+        
+        is_valid = reset_token.expires_at > datetime.now(timezone.utc)
+        return {
+            "valid": is_valid,
+            "expires_at": reset_token.expires_at
+        }
+
     async def change_password(self, entity_id: UUID, data: PasswordChangeRequest) -> PasswordChangeResponse:
         """Изменяет пароль текущего авторизованного пользователя."""
         if data.new_password != data.repeat_password:

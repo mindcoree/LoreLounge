@@ -76,4 +76,17 @@
       ]
     }
   ]
+},
+{
+  "endpoint": "/api/auth/password-reset-check",
+  "method": "GET",
+  "output_encoding": "no-op",
+  "backend": [
+    {
+      "url_pattern": "/api/auth/password-reset-check",
+      "host": [
+        "http://auth:8000"
+      ]
+    }
+  ]
 }

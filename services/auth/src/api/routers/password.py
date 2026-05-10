@@ -8,12 +8,25 @@ from api.schemas.password import (
     PasswordResetRequest,
     PasswordResetConfirm,
     PasswordResetResponse,
+    PasswordResetCheckResponse,
     PasswordChangeRequest,
     PasswordChangeResponse,
 )
 
 router = APIRouter(tags=["Password"])
 logger = logging.getLogger(__name__)
+
+@router.get(
+    "/password-reset-check",
+    response_model=PasswordResetCheckResponse,
+    summary="Проверка токена сброса пароля",
+)
+async def password_reset_check(
+    token: str,
+    service: AuthServiceDep,
+) -> PasswordResetCheckResponse:
+    """Проверяет валидность токена и возвращает время истечения."""
+    return await service.password_reset_check(token)
 
 @router.post(
     "/password-reset-request",
