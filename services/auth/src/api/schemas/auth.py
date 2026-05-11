@@ -44,7 +44,7 @@ class AuthEntityOut(BaseModel):
 class AuthCredentials(BaseModel):
     """Учётные данные для входа в систему."""
 
-    email: str
+    email: EmailStr
     password: str
 
 
