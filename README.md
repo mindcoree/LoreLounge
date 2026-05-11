@@ -208,6 +208,20 @@ sequenceDiagram
 LoreLounge/
 ├── docs/                        # Общая документация
 ├── gateway/                     # API Gateway (KrakenD) и Reverse Proxy (Nginx)
+│   ├── nginx.conf               # Конфигурация Nginx (reverse proxy :80 → :3000, :8080)
+│   ├── krakend/                 # KrakenD API Gateway
+│   │   ├── krakend.tmpl.json    # Основной конфиг с шаблонизацией
+│   │   └── partials/            # Переиспользуемые шаблоны для каждого сервиса
+│   │       ├── auth/
+│   │       │   ├── public.tmpl       # POST register, login, logout, refresh
+│   │       │   └── protected.tmpl    # GET /me, DELETE /me, role-requests (JWT required)
+│   │       ├── profile/
+│   │       │   ├── public.tmpl       # GET user/{name} (public profile lookup)
+│   │       │   └── protected.tmpl    # GET/PUT/PATCH /me, /me/upload, /me/ignored (JWT required)
+│   │       ├── headers-standard.tmpl # Стандартные заголовки (Content-Type, Authorization)
+│   │       ├── headers-post.tmpl     # POST/PUT заголовки + JSON body validation
+│   │       └── jwt-validator.tmpl    # Конфиг JWT валидации (RS256)
+│   └── README.md                # Документация KrakenD и маршрутизации
 ├── frontend/                    # Next.js приложение
 ├── infra/                       # Docker Compose, скрипты, конфиги БД
 ├── services/                    # Микросервисы
@@ -218,6 +232,15 @@ LoreLounge/
 │   └── comment/                 # [в разработке] Комментарии
 └── Makefile                     # Команды управления проектом
 ```
+
+### KrakenD структура
+
+**Flexible Configuration** с Jinja2-подобной шаблонизацией:
+- `krakend.tmpl.json` — точка входа, подключает партиалы через `{{ template "path/to/file.tmpl" . }}`
+- `partials/auth/` и `partials/profile/` — отделены по сервисам для масштабируемости
+- `partials/*protected.tmpl` переиспользуют `headers-*.tmpl` и `jwt-validator.tmpl` для DRY
+
+Добавление нового микросервиса: создать `partials/{service}/{public,protected}.tmpl` + добавить import в `krakend.tmpl.json`.
 
 ---
 
