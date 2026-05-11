@@ -51,6 +51,7 @@ const ProfileMenu = ({ isAuthenticated, onLogout }: { isAuthenticated: boolean; 
     await logout();
     onLogout?.();
     router.push("/");
+    router.refresh();
   };
 
   const handleProfileClick = () => {

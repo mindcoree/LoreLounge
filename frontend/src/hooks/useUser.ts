@@ -34,7 +34,8 @@ export function useUser(): UseUserResult {
       if (profileResult.ok) {
         setProfile(profileResult.data);
         if (profileResult.data.avatar_url) {
-          setAvatarUrl(profileResult.data.avatar_url);
+          const timestamp = Date.now();
+          setAvatarUrl(`${profileResult.data.avatar_url}?v=${timestamp}`);
           setAvatarError(false);
         }
       } else if (profileResult.status === 404) {
@@ -51,6 +52,7 @@ export function useUser(): UseUserResult {
     setProfile(null);
     setAvatarUrl(null);
     setAvatarError(false);
+    setLoading(false);
   };
 
   useEffect(() => {

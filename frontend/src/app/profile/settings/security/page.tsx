@@ -42,7 +42,8 @@ export default function SecuritySettingsPage() {
         if (profile.ok) {
           setNickname(profile.data.name ?? "");
           if (profile.data.avatar_url) {
-            setAvatarUrl(profile.data.avatar_url);
+            const timestamp = Date.now();
+            setAvatarUrl(`${profile.data.avatar_url}?v=${timestamp}`);
             setAvatarError(false);
           }
         } else if (profile.status === 404) {

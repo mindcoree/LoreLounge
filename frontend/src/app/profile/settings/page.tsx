@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Bell, Lock, ShieldBan, UserRound, ArrowLeft, X, ChevronLeft, ChevronRight, ChevronDown, Loader2, ImageIcon, Camera } from "lucide-react";
 import Header from "@/components/Header";
 import { apiFetchJson } from "@/lib/apiClient";
+import { useUser } from "@/hooks/useUser";
 import type { User, Profile, Gender } from "@/types";
 
 const RU_MONTHS = [
@@ -26,6 +27,7 @@ const WEEKDAY_SHORT = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
+  const { refetch } = useUser();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -78,7 +80,8 @@ export default function ProfileSettingsPage() {
           }
 
           if (profile.data.avatar_url) {
-            setAvatarUrl(profile.data.avatar_url);
+            const timestamp = Date.now();
+            setAvatarUrl(`${profile.data.avatar_url}?v=${timestamp}`);
           }
         } else if (profile.status === 404) {
           setNickname(me.data.email.split("@")[0] ?? "");
@@ -189,7 +192,8 @@ export default function ProfileSettingsPage() {
 
       const data = await res.json();
       if (data.avatar_url) {
-        setAvatarUrl(data.avatar_url);
+        const timestamp = Date.now();
+        setAvatarUrl(`${data.avatar_url}?v=${timestamp}`);
         setAvatarError(false);
 
         // Обновляем профиль с новым avatar_url
@@ -201,6 +205,7 @@ export default function ProfileSettingsPage() {
         if (patchRes.ok) {
           setStatus("Аватар обновлён");
           router.refresh();
+          refetch();
         } else {
           setStatus("Аватар загружен, но не сохранён в профиле");
         }
