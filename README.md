@@ -96,13 +96,13 @@ flowchart LR
 
     Auth -->|"SELECT / INSERT"| PGAuth
     Auth -->|"revoked tokens"| Redis
-    Auth -->|"publish event"| RabbitMQ
+    Auth -->|"publish: account_deletion_queue"| RabbitMQ
 
     Profile -->|"SELECT / INSERT"| PGProfile
     Profile -->|"avatars / media"| MinIO
-    Profile -.->|"ACCOUNT_DELETED"| RabbitMQ
 
-    RabbitMQ -->|"subscribe"| Notification
+    RabbitMQ -->|"subscribe: account_deletion_queue"| Profile
+    RabbitMQ -->|"subscribe: password_reset_queue"| Notification
 ```
 
 ![Архитектура системы](./docs/img/architecture.png)
@@ -172,28 +172,25 @@ sequenceDiagram
     participant MinIO as MinIO (Storage)
 
     User->>Auth: DELETE /api/auth/me
-    Auth->>Auth: Удаляет учетную запись в DB
-    Auth->>RMQ: Публикует AccountDeletedEvent (user_id)
+    Auth->>Auth: Удаляет учетную запись в БД
+    Auth-->>RMQ: Публикует сообщение в очередь account_deletion_queue
     Auth-->>User: 200 OK (Аккаунт удален)
-    
-    Note over RMQ, Profile: Асинхронная обработка события
-    
-    RMQ->>Profile: Доставляет событие AccountDeleted (user_id)
-    Profile->>PG: Удаляет профиль по user_id в DB (коммит)
-    Profile->>MinIO: Удаляет файлы профиля по user_id (S3) — best-effort
-    Note over Profile, MinIO: Если MinIO недоступен — логируется, не блокирует
+
+    Note over RMQ: Асинхронная обработка
+
+    RMQ-->>Profile: Доставляет сообщение из очереди
+    Profile->>PG: Удаляет профиль по user_id (коммит)
+    Profile->>MinIO: Удаляет файлы профиля (best-effort)
 ```
 
 **Поток обработки события:**
 
-1.  **Auth Service** (инициатор): После удаления своей записи публикует событие в RabbitMQ.
-2.  **RabbitMQ**: Обеспечивает надежную доставку события в очередь `account_deletion_queue`.
-3.  **Profile Service** (обработчик события):
-    - Получает событие `AccountDeleted` с `user_id`
-    - **Шаг 1**: Удаляет запись профиля в PostgreSQL по `user_id` (коммитит транзакцию)
-    - **Шаг 2**: Удаляет файлы аватара и фона из MinIO по `user_id` (best-effort, логирует ошибки, не прерывает процесс)
-    
-    Разделение на шаги гарантирует консистентность: даже если MinIO недоступен, профиль удален из БД.
+1.  **Auth Service**: Удаляет свою запись → публикует сообщение в очередь `account_deletion_queue`.
+2.  **RabbitMQ**: Обеспечивает доставку сообщения из очереди.
+3.  **Profile Service** (подписчик очереди):
+    - Получает сообщение с `user_id`
+    - Удаляет профиль из PostgreSQL (коммитит транзакцию)
+    - Удаляет файлы из MinIO (best-effort, не блокирует при ошибках)
 
 ---
 
