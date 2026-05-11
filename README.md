@@ -96,7 +96,8 @@ flowchart LR
 
     Auth -->|"SELECT / INSERT"| PGAuth
     Auth -->|"revoked tokens"| Redis
-    Auth -->|"publish: account_deletion_queue"| RabbitMQ
+    Auth -->>|"publish: password_reset_queue"| RabbitMQ
+    Auth -->>|"publish: account_deletion_queue"| RabbitMQ
 
     Profile -->|"SELECT / INSERT"| PGProfile
     Profile -->|"avatars / media"| MinIO
