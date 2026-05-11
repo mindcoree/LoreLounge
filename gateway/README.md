@@ -27,18 +27,19 @@
 
 Конфиг: `gateway/krakend/krakend.tmpl.json`
 
-- Используется Flexible Configuration.
-- Публичные эндпоинты: register, login, logout, refresh, password-reset.
-- Публичные эндпоинты: `/api/auth/*`, `GET /api/profile/{name}`.
-- Защищённые эндпоинты: `/api/auth/me`, `/api/auth/role-*`, `/api/profile/me*`.
+- Используется Flexible Configuration (Go templates).
+- Публичные эндпоинты: `partials/auth-public.tmpl` — register, login, logout, refresh, password-reset.
+- Защищённые эндпоинты: `partials/auth-protected.tmpl` — /me, role-*, password-change.
+- Profile эндпоинты: `partials/profile-public.tmpl` и `partials/profile-protected.tmpl`.
 - JWT валидация: RS256 + JWKS от auth.
 
 ### Подключённые profile-роуты через KrakenD
 
-- `POST /api/profile/me`
+- `PUT /api/profile/me`
 - `GET /api/profile/me`
 - `PATCH /api/profile/me`
-- `GET /api/profile/{name}`
+- `POST /api/profile/me/upload`
+- `GET /api/profile/user/{name}`
 - `GET /api/profile/me/ignored`
 - `POST /api/profile/me/ignored/{target_user_id}`
 - `DELETE /api/profile/me/ignored/{target_user_id}`
