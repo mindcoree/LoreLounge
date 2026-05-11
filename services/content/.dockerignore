@@ -8,3 +8,6 @@ __pycache__/
 .env.*
 .DS_Store
 *.log
+# Ignore compiled Python in migrations
+src/infrastructure/db/migrations/versions/__pycache__/
+src/infrastructure/db/migrations/__pycache__/

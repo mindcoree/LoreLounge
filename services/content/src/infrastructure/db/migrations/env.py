@@ -1,0 +1,100 @@
+import asyncio
+import os
+import sys
+from logging.config import fileConfig
+from pathlib import Path
+
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
+from alembic import context
+
+# ── 1. Add src/ to PYTHONPATH ───────────────────────────────────────────
+# The file is located at: services/content/src/infrastructure/db/migrations/env.py
+# src/ located at: services/content/src/
+MIGRATIONS_DIR = Path(__file__).parent  # migrations/
+DB_DIR = MIGRATIONS_DIR.parent  # db/
+INFRA_DIR = DB_DIR.parent  # infrastructure/
+SRC_DIR = INFRA_DIR.parent  # src/
+SERVICE_DIR = SRC_DIR.parent  # content/
+PROJECT_ROOT = SERVICE_DIR.parent  # LoreLounge/
+
+sys.path.insert(0, str(SRC_DIR))
+
+# ── 2. Load .env from the project root ───────────────────────────────────────────────
+# pydantic-settings looks for .env relative to CWD, but we're running alembic
+# from services/content/ — so we load it explicitly.
+env_file = PROJECT_ROOT / ".env"
+if env_file.exists():
+    from dotenv import load_dotenv
+
+    load_dotenv(dotenv_path=env_file, override=False)
+
+from config.settings import settings
+from infrastructure.db.models.base import Base
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+config = context.config
+config.set_main_option("sqlalchemy.url", str(settings.db.url))
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+target_metadata = Base.metadata
+
+
+
+# ── Offline mode ──────────────────────────────────────────────────────────────
+
+
+def run_migrations_offline() -> None:
+    """Запуск миграций без создания Engine (только URL)."""
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+        compare_type=True,
+        compare_server_default=True,
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+# ── Online mode ───────────────────────────────────────────────────────────────
+
+
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        compare_server_default=True,
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+    await connectable.dispose()
+
+
+def run_migrations_online() -> None:
+    asyncio.run(run_async_migrations())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
