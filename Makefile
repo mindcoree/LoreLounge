@@ -5,7 +5,7 @@
 #   make up          — поднять всё
 #   make down        — остановить всё
 #   make certs       — сгенерировать RSA-ключи для JWT
-#   make migrate     — применить миграции auth
+#   make migrate     — применить Alembic-миграции (если нужны)
 # =============================================================================
 
 .PHONY: help up down build logs certs migrate migrate-gen ps clean

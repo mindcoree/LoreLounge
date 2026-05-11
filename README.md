@@ -270,12 +270,11 @@ cp services/profile/.env.example services/profile/.env
 # 2. Сгенерировать RSA-ключи для JWT
 make certs
 
-# 3. Применить миграции БД
-make migrate
-
-# 4. Запустить все сервисы
+# 3. Запустить все сервисы
 make up
 ```
+
+Миграции БД уже применены через `init.sql` при первом запуске контейнеров.
 
 После запуска приложение доступно на `http://localhost`.
 
@@ -290,8 +289,6 @@ make up
 | `make ps` | Статус контейнеров |
 | `make clean` | Остановить и удалить все volumes |
 | `make certs` | Сгенерировать RSA-ключи для JWT |
-| `make migrate` | Применить Alembic-миграции (auth) |
-| `make migrate-gen MSG="..."` | Создать новую миграцию |
 
 ---
 
