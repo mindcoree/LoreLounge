@@ -1,7 +1,11 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
-from domain.exceptions import ProfileAlreadyExistsError, ProfileNotFoundError
+from domain.exceptions import (
+    ProfileConflictError,
+    ProfileNameTakenError,
+    ProfileNotFoundError,
+)
 
 
 async def profile_not_found_handler(
@@ -14,12 +18,22 @@ async def profile_not_found_handler(
     )
 
 
-async def profile_already_exists_handler(
+async def profile_name_taken_handler(
     request: Request,
-    exc: ProfileAlreadyExistsError,
+    exc: ProfileNameTakenError,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
-        content={"detail": "Profile already exists."},
+        content={"detail": f"Profile name '{exc.name}' is already taken."},
+    )
+
+
+async def profile_conflict_handler(
+    request: Request,
+    exc: ProfileConflictError,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": "Profile conflict."},
     )
 

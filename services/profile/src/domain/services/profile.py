@@ -1,52 +1,100 @@
 from uuid import UUID
+import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.schemas.profile import ProfileCreate, ProfileUpdate
-from domain.exceptions import ProfileAlreadyExistsError, ProfileNotFoundError
+from domain.exceptions import (
+    ProfileConflictError,
+    ProfileNameTakenError,
+    ProfileNotFoundError,
+    ProfileAlreadyExistsError,
+    ProfileRepositoryInvariantError,
+)
+from infrastructure.db.models.profile import Profile
 from infrastructure.db.repositories.profile import ProfileRepository
-from infrastructure.storage.minio_client import delete_user_media_from_minio
+from infrastructure.storage import (
+    MinioCleanupError,
+    delete_user_media_from_minio,
+)
+
+logger = logging.getLogger(__name__)
 
 class ProfileService:
     def __init__(self, session: AsyncSession):
         self.session = session
-        # initializing repositories inside the service ensures they share the same session and transaction context, which is crucial for maintaining data integrity across multiple operations within the same business logic execution.
+        # Keep repository bound to the same session so multi-step business flows stay atomic.
         self.profile_repo = ProfileRepository(session)
 
-    async def create_profile(self, user_id: UUID, profile_data: ProfileCreate):
-        """Create a new profile for a user."""
-        # 1. Check if profile already exists
-        existing_profile = await self.profile_repo.get_by_user_id(user_id)
-        if existing_profile:
-            raise ProfileAlreadyExistsError(user_id)
-        
-        # 2. Check if the name is already taken
-        existing_name = await self.profile_repo.get_by_name(profile_data.name)
-        if existing_name:
-            raise ProfileAlreadyExistsError(user_id)
-        
-        # 3. Create the profile
-        profile = await self.profile_repo.create(
-            user_id=user_id,
-            name=profile_data.name,
-            bio=profile_data.bio,
-            avatar_url=profile_data.avatar_url,
-            background_url=profile_data.background_url,
-            birth_date=profile_data.birth_date,
-            gender=profile_data.gender,
-        )
-        
-        # 4. Commit the transaction
+    async def _commit_and_refresh(self, profile: Profile) -> Profile:
         await self.session.commit()
         await self.session.refresh(profile)
         return profile
 
-    async def get_my_profile(self, user_id: UUID):
+    async def _rollback(self) -> None:
+        await self.session.rollback()
+
+    async def replace_profile(self, user_id: UUID, profile_data: ProfileCreate) -> Profile:
+        """Create or fully replace a profile for a user (idempotent PUT semantics)."""
+        # Preserve PUT idempotency: existing resource should be replaced, not rejected.
+        existing_profile = await self.profile_repo.get_by_user_id(user_id)
+        if existing_profile:
+            return await self._replace_existing_profile(existing_profile, profile_data)
+        
+        # Fast fail on obvious name collision before opening write path.
+        existing_name = await self.profile_repo.get_by_name(profile_data.name)
+        if existing_name:
+            raise ProfileNameTakenError(profile_data.name)
+        
+        try:
+            profile = await self.profile_repo.create_profile(
+                user_id=user_id,
+                name=profile_data.name,
+                bio=profile_data.bio,
+                avatar_url=profile_data.avatar_url,
+                background_url=profile_data.background_url,
+                birth_date=profile_data.birth_date,
+                gender=profile_data.gender,
+            )
+
+            # Expose the committed state to caller (timestamps/defaults may be DB-generated).
+            return await self._commit_and_refresh(profile)
+        except ProfileAlreadyExistsError:
+            await self._rollback()
+            # Concurrent create can win the race; re-read and apply replace to keep PUT deterministic.
+            existing_profile = await self.profile_repo.get_by_user_id(user_id)
+            if existing_profile:
+                return await self._replace_existing_profile(existing_profile, profile_data)
+            raise
+        except (ProfileNameTakenError, ProfileConflictError):
+            await self._rollback()
+            raise
+
+    async def create_profile(self, user_id: UUID, profile_data: ProfileCreate) -> Profile:
+        """Backward-compatible alias for PUT handler."""
+        return await self.replace_profile(user_id=user_id, profile_data=profile_data)
+
+    async def _replace_existing_profile(
+        self,
+        profile: Profile,
+        profile_data: ProfileCreate,
+    ) -> Profile:
+        replacement_data = profile_data.model_dump()
+        try:
+            updated_profile = await self.profile_repo.update_profile(profile.id, **replacement_data)
+            if not updated_profile:
+                raise ProfileRepositoryInvariantError()
+            return await self._commit_and_refresh(updated_profile)
+        except (ProfileNameTakenError, ProfileConflictError):
+            await self._rollback()
+            raise
+
+    async def get_my_profile(self, user_id: UUID) -> Profile:
         profile = await self.profile_repo.get_by_user_id(user_id)
         if not profile:
             raise ProfileNotFoundError(user_id)
         return profile
 
-    async def get_by_name(self,name: str):
+    async def get_by_name(self,name: str) -> Profile:
         profile = await self.profile_repo.get_by_name(name)
         if not profile:
             raise ProfileNotFoundError(name)
@@ -63,33 +111,51 @@ class ProfileService:
         return True
 
     async def delete_account_data(self, user_id: UUID) -> bool:
-        await delete_user_media_from_minio(user_id)
-        return await self.delete_my_profile(user_id)
-    
+        # Persist DB deletion first: if commit fails, external files are still intact.
+        if not await self.delete_my_profile(user_id):
+            raise ProfileNotFoundError(user_id)
 
-    async def update_my_profile(self, user_id: UUID, update_data: ProfileUpdate):
-        # 1. Check if the profile exists, if not - raise an error (we don't want to create a new one here)
+        # MinIO cleanup is best-effort because DB transaction is already committed.
+        try:
+            await delete_user_media_from_minio(user_id)
+        except MinioCleanupError:
+            logger.exception("Failed to delete user media from MinIO", extra={"user_id": str(user_id)})
+
+        return True
+
+
+    async def patch_profile(self, user_id: UUID, update_data: ProfileUpdate) -> Profile:
+        # PATCH should never create resources; missing profile is a contract violation for this endpoint.
         profile = await self.profile_repo.get_by_user_id(user_id)
         if not profile:
             raise ProfileNotFoundError(user_id)
 
-        # 2. Prepare the update data (exclude None values, keep only what the user actually sent)
+        # Keep PATCH semantics: update only fields explicitly provided by the client.
         update_dict = update_data.model_dump(exclude_unset=True)
         
         if not update_dict:
-            return profile # If no updates were provided, return the current profile
+            # Avoid unnecessary writes when request does not change state.
+            return profile
 
-        # 3. Additional logic: if name is being updated, check if it's already taken
+        # Validate name uniqueness early to return stable domain-level errors.
         if "name" in update_dict and update_dict["name"]:
             existing_name = await self.profile_repo.get_by_name(update_dict["name"])
             if existing_name and existing_name.user_id != user_id:
-                raise ProfileAlreadyExistsError(user_id)
+                raise ProfileNameTakenError(update_dict["name"])
 
         # 4. Perform the update in the database (the repository will make the flush)
-        updated_profile = await self.profile_repo.update(profile.id, **update_dict)
+        try:
+            updated_profile = await self.profile_repo.update_profile(profile.id, **update_dict)
+            if not updated_profile:
+                raise ProfileRepositoryInvariantError()
 
-        # 5. Commit the transaction!
-        await self.session.commit()
-        await self.session.refresh(updated_profile) 
-        return updated_profile
+            # Return committed view so caller gets canonical DB state.
+            return await self._commit_and_refresh(updated_profile)
+        except (ProfileNameTakenError, ProfileConflictError):
+            await self._rollback()
+            raise
+
+    async def update_my_profile(self, user_id: UUID, update_data: ProfileUpdate) -> Profile:
+        """Backward-compatible alias for PATCH handler."""
+        return await self.patch_profile(user_id=user_id, update_data=update_data)
     

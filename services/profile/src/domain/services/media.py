@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import UploadFile
 
 from config.settings import settings
-from infrastructure.storage.minio_client import upload_file_to_minio
+from infrastructure.storage import upload_file_to_minio
 from domain.exceptions.media import MediaFormatError, MediaSizeError
 
 

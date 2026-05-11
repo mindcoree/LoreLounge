@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from typing import Any, cast
 
 from domain.exceptions import (
+    ProfileConflictError,
     ProfileNotFoundError,
-    ProfileAlreadyExistsError,
+    ProfileNameTakenError,
     SelfIgnoreError,
     UserAlreadyIgnoredError,
     UserNotInIgnoreListError,
@@ -12,8 +13,9 @@ from domain.exceptions import (
 )
 
 from .error_profile import (
+    profile_conflict_handler,
     profile_not_found_handler,
-    profile_already_exists_handler,
+    profile_name_taken_handler,
 )
 
 from .error_ignore_list import (
@@ -32,8 +34,9 @@ def _register_exception_handler(app: FastAPI, exception_type: type[Exception], h
 
 
 def _setup_profile_exception_handlers(app: FastAPI) -> None:
+    _register_exception_handler(app, ProfileConflictError, profile_conflict_handler)
     _register_exception_handler(app, ProfileNotFoundError, profile_not_found_handler)
-    _register_exception_handler(app, ProfileAlreadyExistsError, profile_already_exists_handler)
+    _register_exception_handler(app, ProfileNameTakenError, profile_name_taken_handler)
 
 
 def _setup_ignore_list_exception_handlers(app: FastAPI) -> None:

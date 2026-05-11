@@ -6,7 +6,23 @@ class ProfileNotFoundError(DomainError):
         self.identifier = identifier
         super().__init__(f"Profile {identifier} not found.")
 
+class ProfileNameTakenError(DomainError):
+    def __init__(self, name: str):
+        self.name = name
+        super().__init__(f"Profile name '{name}' is already taken.")
+
+
+class ProfileConflictError(DomainError):
+    def __init__(self):
+        super().__init__("Profile conflict.")
+
+
+class ProfileRepositoryInvariantError(DomainError):
+    def __init__(self):
+        super().__init__("Profile repository invariant violated.")
+
+
 class ProfileAlreadyExistsError(DomainError):
-    def __init__(self, user_id: UUID):
-        self.user_id = user_id
-        super().__init__(f"Profile for user {user_id} already exists.")
+    def __init__(self, identifier: UUID):
+        self.identifier = identifier
+        super().__init__(f"Profile for user {identifier} already exists.")

@@ -7,6 +7,7 @@ from miniopy_async.error import S3Error
 from fastapi import UploadFile
 
 from config.settings import settings
+from infrastructure.storage.exceptions import MinioCleanupError
 
 
 logger = logging.getLogger(__name__)
@@ -72,9 +73,13 @@ async def delete_file_from_minio(user_id: UUID, file_type: str = "avatar") -> No
                 exc.code,
             )
             return
-        logger.exception("Failed to delete %s media for user_id=%s", file_type, user_id)
-    except Exception:
-        logger.exception("Failed to delete %s media for user_id=%s", file_type, user_id)
+        raise MinioCleanupError(
+            f"Failed to delete {file_type} media for user_id={user_id}"
+        ) from exc
+    except (TimeoutError, OSError) as exc:
+        raise MinioCleanupError(
+            f"Unexpected MinIO cleanup failure for {file_type} media and user_id={user_id}"
+        ) from exc
 
 
 async def delete_user_media_from_minio(user_id: UUID) -> None:

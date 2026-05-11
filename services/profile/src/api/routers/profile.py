@@ -24,10 +24,11 @@ router = APIRouter(tags=["Profile endpoints"])  # /profile/
     responses={
         200: {"description": "Profile successfully created or replaced"},
         400: {"description": "Bad Request - Invalid input data"},
+        409: {"description": "Conflict - Profile name is already taken"},
         401: {
             "description": "Unauthorized - Invalid or missing authentication credentials"
         },
-        409: {"description": "Conflict - Profile already exists"},
+
     },
 )
 async def create_my_profile(
@@ -35,8 +36,11 @@ async def create_my_profile(
     profile_data: ProfileCreate,
     profile_service: ProfileServiceDep,
 ):
-    """Create a profile for yourself. This endpoint should only be called once per user, as each user can have only one profile. If a profile already exists for the user, it should return a 409 Conflict error."""
-    return await profile_service.create_profile(
+    """Create or fully replace your profile.
+
+    Repeating the same PUT request produces the same resulting profile state.
+    """
+    return await profile_service.replace_profile(
         user_id=guard, profile_data=profile_data
     )
 
@@ -81,7 +85,7 @@ async def update_my_profile(
 ):
     """Update about yourself (name, bio)"""
 
-    return await profile_service.update_my_profile(
+    return await profile_service.patch_profile(
         user_id=guard,
         update_data=update_data,
     )

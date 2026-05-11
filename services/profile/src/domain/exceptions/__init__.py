@@ -1,5 +1,11 @@
 from .base import DomainError
-from .profile import ProfileNotFoundError, ProfileAlreadyExistsError
+from .profile import (
+    ProfileNotFoundError,
+    ProfileNameTakenError,
+    ProfileConflictError,
+    ProfileRepositoryInvariantError,
+    ProfileAlreadyExistsError,
+)
 from .media import MediaFormatError, MediaSizeError
 from .ignore_list import (
     SelfIgnoreError,
@@ -10,6 +16,9 @@ from .ignore_list import (
 __all__ = [
     "DomainError",
     "ProfileNotFoundError",
+    "ProfileNameTakenError",
+    "ProfileConflictError",
+    "ProfileRepositoryInvariantError",
     "ProfileAlreadyExistsError",
     "SelfIgnoreError",
     "UserAlreadyIgnoredError",
