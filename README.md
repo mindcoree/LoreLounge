@@ -191,10 +191,9 @@ sequenceDiagram
     
     Note over RMQ, Profile: Асинхронная обработка события
     
-    RMQ->>Profile: Доставляет событие AccountDeleted
-    Profile->>PG: Удаляет запись профиля в DB (коммит)
-    Profile->>Profile: Получает пути файлов (aватар, фон)
-    Profile->>MinIO: Удаляет aватар и фон (S3) — best-effort
+    RMQ->>Profile: Доставляет событие AccountDeleted (user_id)
+    Profile->>PG: Удаляет профиль по user_id в DB (коммит)
+    Profile->>MinIO: Удаляет файлы профиля по user_id (S3) — best-effort
     Note over Profile, MinIO: Если MinIO недоступен — логируется, не блокирует
 ```
 
@@ -204,8 +203,8 @@ sequenceDiagram
 2.  **RabbitMQ**: Обеспечивает надежную доставку события в очередь `account_deletion_queue`.
 3.  **Profile Service** (обработчик события):
     - Получает событие `AccountDeleted` с `user_id`
-    - **Шаг 1**: Удаляет запись профиля в PostgreSQL (коммитит транзакцию)
-    - **Шаг 2**: Удаляет файлы аватара и фона из MinIO (best-effort, логирует ошибки, не прерывает процесс)
+    - **Шаг 1**: Удаляет запись профиля в PostgreSQL по `user_id` (коммитит транзакцию)
+    - **Шаг 2**: Удаляет файлы аватара и фона из MinIO по `user_id` (best-effort, логирует ошибки, не прерывает процесс)
     
     Разделение на шаги гарантирует консистентность: даже если MinIO недоступен, профиль удален из БД.
 
