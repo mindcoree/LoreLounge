@@ -24,12 +24,7 @@ networks:
   lorelounge_net:
     driver: bridge
 
-  # Изолированная сеть БД auth — только auth имеет доступ
-  auth_db_net:
-    driver: bridge
-    # internal: true # 🔒 Закомментировано для DataGrip
-
-    # Сеть для общения микросервисов с брокером сообщений
+  # Сеть для общения микросервисов с брокером сообщений
   broker_net:
     driver: bridge
     internal: true
@@ -82,13 +77,13 @@ services:
   #  AUTH SERVICE + его личная БД
   # ════════════════════════════════════════════════════════════════════
 
-  # PostgreSQL — только для auth
+  # PostgreSQL для auth
   postgres_auth:
     image: postgres:15-alpine
     container_name: postgres_auth
     restart: always
     networks:
-      - auth_db_net
+      - lorelounge_net
     ports:
       - "5432:5432" # Проброс порта для DataGrip
     environment:
@@ -105,18 +100,18 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis — только для auth (кэш JWT, blacklist токенов)
-  redis_auth:
+  # Redis — единый контейнер для всех сервисов (логические БД: auth=0, profile=1, etc.)
+  redis:
     image: redis:7-alpine
-    container_name: redis_auth
+    container_name: redis
     restart: always
     networks:
-      - auth_db_net
-    command: redis-server --appendonly yes --requirepass ${REDIS_AUTH_PASSWORD:-redis_auth_secret}
+      - lorelounge_net
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secret}
     volumes:
-      - redis_auth_data:/data
+      - redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "-a", "${REDIS_AUTH_PASSWORD:-redis_auth_secret}", "ping" ]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -132,12 +127,11 @@ services:
     restart: always
     networks:
       - lorelounge_net
-      - auth_db_net
       - broker_net
     depends_on:
       postgres_auth:
         condition: service_healthy
-      redis_auth:
+      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -300,10 +294,7 @@ services:
       - frontend
 
 volumes:
-  postgres_auth_data: # данные БД auth
-  redis_auth_data:
+  postgres_auth_data:
+  redis_data:
   postgres_profile_data:
   minio_data:
-    # кэш auth
-    # postgres_content_data:
-    # postgres_user_data:
