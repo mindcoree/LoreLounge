@@ -52,7 +52,7 @@ flowchart LR
     classDef broker stroke:#f87171,fill:#450a0a,color:#fff;
     classDef external stroke:#a78bfa,fill:#2e1065,color:#fff;
 
-    Browser([\"Браузер<br/><small>Пользовательский интерфейс, который обращается к приложению</small>\"])
+    Browser["Браузер<br/><small>Пользовательский интерфейс, который обращается к приложению</small>"]
     class Browser external
 
     subgraph gateway_layer["gateway_layer"]
@@ -300,7 +300,7 @@ make up
 | `make build` | Пересобрать образы без кэша |
 | `make logs` | Стримить логи всех сервисов |
 | `make ps` | Статус контейнеров |
-| `make clean` | Остановить и удалить все volumes ⚠️ |
+| `make clean` | Остановить и удалить все volumes |
 | `make certs` | Сгенерировать RSA-ключи для JWT |
 | `make migrate` | Применить Alembic-миграции (auth) |
 | `make migrate-gen MSG="..."` | Создать новую миграцию |
