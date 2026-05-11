@@ -73,7 +73,7 @@ flowchart LR
     subgraph storage_layer["storage_layer"]
         PGAuth["Postgres Auth<br/><small>База данных авторизации</small>"]
         PGProfile["Postgres Profile<br/><small>База данных профилей</small>"]
-        RedisAuth["Redis Auth<br/><small>Кэш и список аннулированных токенов</small>"]
+        Redis["Redis<br/><small>Blacklist токенов (db=0)</small>"]
         MinIO["MinIO<br/><small>Хранение медиа и аватаров</small>"]
     end
 
@@ -84,7 +84,7 @@ flowchart LR
     class Nginx,KrakenD gateway
     class Frontend frontend
     class Auth,Profile,Notification services
-    class PGAuth,RedisAuth,PGProfile,MinIO storage
+    class PGAuth,Redis,PGProfile,MinIO storage
     class RabbitMQ broker
 
     Browser -->|"HTTP :80"| Nginx
@@ -95,7 +95,7 @@ flowchart LR
     KrakenD -->|"JWT → headers"| Profile
 
     Auth -->|"SELECT / INSERT"| PGAuth
-    Auth -->|"revoked tokens"| RedisAuth
+    Auth -->|"revoked tokens"| Redis
     Auth -->|"publish event"| RabbitMQ
 
     Profile -->|"SELECT / INSERT"| PGProfile
@@ -126,17 +126,9 @@ flowchart LR
         Profile["profile"]
         Notification["notification"]
         MinIO["minio"]
-    end
-
-    subgraph auth_db_net["auth_db_net (bridge)"]
-        Auth2["auth"]
-        PGAuth["postgres_auth"]
-        RedisAuth["redis_auth"]
-    end
-
-    subgraph profile_db_net["profile_db_net (bridge)"]
-        Profile2["profile"]
-        PGProfile["postgres_profile"]
+        Redis["redis"]
+        PostgresAuth["postgres_auth"]
+        PostgresProfile["postgres_profile"]
     end
 
     subgraph broker_net["broker_net (internal)"]
@@ -149,9 +141,7 @@ flowchart LR
 
 | Сеть | Участники | Примечание |
 |------|-----------|-----------|
-| `lorelounge_net` | nginx, krakend, frontend, auth, profile, notification, minio | Основная сервисная сеть |
-| `auth_db_net` | auth, postgres_auth, redis_auth | Изолирована: только auth видит свою БД |
-| `profile_db_net` | profile, postgres_profile | Изолирована: только profile видит свою БД |
+| `lorelounge_net` | nginx, krakend, frontend, auth, profile, notification, minio, redis, postgres_auth, postgres_profile | Основная сервисная сеть |
 | `broker_net` | auth, profile, notification, rabbitmq | `internal: true` — без выхода наружу |
 
 ### Открытые порты
