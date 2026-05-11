@@ -52,7 +52,7 @@ flowchart LR
     classDef broker stroke:#f87171,fill:#450a0a,color:#fff;
     classDef external stroke:#a78bfa,fill:#2e1065,color:#fff;
 
-    Browser(["🌐 Браузер<br/><small>Пользовательский интерфейс, который обращается к приложению</small>"])
+    Browser([\"Браузер<br/><small>Пользовательский интерфейс, который обращается к приложению</small>\"])
     class Browser external
 
     subgraph gateway_layer["gateway_layer"]
@@ -118,7 +118,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph lorelounge_net["lorelounge_net  (bridge)"]
+    subgraph lorelounge_net["lorelounge_net (bridge)"]
         Nginx["nginx"]
         KrakenD["krakend"]
         Frontend["frontend"]
@@ -128,18 +128,18 @@ flowchart LR
         MinIO["minio"]
     end
 
-    subgraph auth_db_net["auth_db_net  (bridge)"]
+    subgraph auth_db_net["auth_db_net (bridge)"]
         Auth2["auth"]
         PGAuth["postgres_auth"]
         RedisAuth["redis_auth"]
     end
 
-    subgraph profile_db_net["profile_db_net  (bridge)"]
+    subgraph profile_db_net["profile_db_net (bridge)"]
         Profile2["profile"]
         PGProfile["postgres_profile"]
     end
 
-    subgraph broker_net["broker_net  (internal)"]
+    subgraph broker_net["broker_net (internal)"]
         Auth3["auth"]
         Profile3["profile"]
         Notification2["notification"]
@@ -177,28 +177,37 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-    participant User as 👤 Пользователь
-    participant Auth as 🔒 Auth Service
-    participant RMQ as 📨 RabbitMQ
-    participant Profile as 👤 Profile Service
-    participant MinIO as 📁 MinIO (Storage)
+    participant User as Пользователь
+    participant Auth as Auth Service
+    participant RMQ as RabbitMQ
+    participant Profile as Profile Service
+    participant PG as PostgreSQL
+    participant MinIO as MinIO (Storage)
 
     User->>Auth: DELETE /api/auth/me
     Auth->>Auth: Удаляет учетную запись в DB
     Auth->>RMQ: Публикует AccountDeletedEvent (user_id)
     Auth-->>User: 200 OK (Аккаунт удален)
     
-    Note over RMQ, Profile: Асинхронная обработка
+    Note over RMQ, Profile: Асинхронная обработка события
     
-    RMQ->>Profile: Доставляет событие
-    Profile->>Profile: Ищет профиль и данные
-    Profile->>MinIO: Удаляет аватар и фон (S3)
-    Profile->>Profile: Удаляет запись профиля в DB
+    RMQ->>Profile: Доставляет событие AccountDeleted
+    Profile->>PG: Удаляет запись профиля в DB (коммит)
+    Profile->>Profile: Получает пути файлов (aватар, фон)
+    Profile->>MinIO: Удаляет aватар и фон (S3) — best-effort
+    Note over Profile, MinIO: Если MinIO недоступен — логируется, не блокирует
 ```
 
-1.  **Auth Service**: Инициатор процесса. После удаления записи из своей БД, он отправляет событие в очередь `account_deletion_queue`.
-2.  **RabbitMQ**: Обеспечивает надежную доставку сообщения между сервисами.
-3.  **Profile Service**: Подписан на очередь. При получении события производит полную очистку: удаляет связанные файлы из MinIO и запись профиля из PostgreSQL.
+**Поток обработки события:**
+
+1.  **Auth Service** (инициатор): После удаления своей записи публикует событие в RabbitMQ.
+2.  **RabbitMQ**: Обеспечивает надежную доставку события в очередь `account_deletion_queue`.
+3.  **Profile Service** (обработчик события):
+    - Получает событие `AccountDeleted` с `user_id`
+    - **Шаг 1**: Удаляет запись профиля в PostgreSQL (коммитит транзакцию)
+    - **Шаг 2**: Удаляет файлы аватара и фона из MinIO (best-effort, логирует ошибки, не прерывает процесс)
+    
+    Разделение на шаги гарантирует консистентность: даже если MinIO недоступен, профиль удален из БД.
 
 ---
 
