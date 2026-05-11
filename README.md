@@ -100,10 +100,7 @@ flowchart LR
 
     Profile -->|"SELECT / INSERT"| PGProfile
     Profile -->|"avatars / media"| MinIO
-    Profile -->|"publish event"| RabbitMQ
-
-    Auth -.->|"ACCOUNT_DELETED"| RabbitMQ
-    RabbitMQ -.->|"cleanup data"| Profile
+    Profile -.->|"ACCOUNT_DELETED"| RabbitMQ
 
     RabbitMQ -->|"subscribe"| Notification
 ```
@@ -294,34 +291,9 @@ make up
 
 ## Маршрутизация
 
-### Nginx → сервисы
+Nginx направляет запросы на KrakenD (внутренний API Gateway), который проксирует их в соответствующие микросервисы. Публичные эндпоинты (login, logout, register, refresh) получают Cookie-заголовки от KrakenD для корректной работы аутентификации.
 
-| Путь | Назначение |
-|------|-----------|
-| `/api/auth/docs`, `/api/auth/redoc`, `/api/auth/openapi.json` | Swagger auth (напрямую в auth:8000) |
-| `/api/profile/docs`, `/api/profile/openapi.json` | Swagger profile (напрямую в profile:8000) |
-| `/api/*` | KrakenD API Gateway (krakend:8080) |
-| `/media/*` | Статика из MinIO (minio:9000) |
-| `/nginx-health` | Health-check Nginx |
-| `/*` | Next.js Frontend (frontend:3000) |
-
-### Ограничения на уровне Nginx
-
-- Rate limit применяется для `/api/auth/login`, `/api/auth/register`, `/api/auth/password-reset-request`, `/api/auth/password-reset-confirm`.
-- Для `/api/*` и frontend-роутов включены CORS-заголовки.
-
-### Маршруты KrakenD (текущее состояние)
-
-| Группа | Маршруты |
-|------|-----------|
-| Auth Public | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/refresh`, `POST /api/auth/password-reset-request`, `POST /api/auth/password-reset-confirm`, `GET /api/auth/password-reset-check?token=...` |
-| Auth Protected (JWT) | `GET /api/auth/me`, `DELETE /api/auth/me`, `POST /api/auth/role-request`, `GET /api/auth/role-requests/`, `POST /api/auth/role-requests/{request_id}/approve`, `POST /api/auth/role-requests/{request_id}/reject`, `POST /api/auth/password-change` |
-| Profile Public | `GET /api/profile/user/{name}` |
-| Profile Protected (JWT) | `GET /api/profile/me`, `PUT /api/profile/me`, `PATCH /api/profile/me`, `POST /api/profile/me/upload`, `GET /api/profile/me/ignored`, `POST /api/profile/me/ignored/{target_user_id}`, `DELETE /api/profile/me/ignored/{target_user_id}` |
-
-Для protected-эндпоинтов KrakenD валидирует JWT и прокидывает служебные заголовки пользователя (`x-user-id`, `x-user-role`, `x-user-email`) в downstream-сервисы.
-
-### Поток авторизованного запроса
+Для просмотра актуальных маршрутов — см. `gateway/krakend/partials/`.
 
 ```mermaid
 sequenceDiagram
