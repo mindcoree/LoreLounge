@@ -247,7 +247,7 @@ LoreLounge/
 - `partials/profile-public.tmpl`, `partials/profile-protected.tmpl` — эндпоинты профиля
 - `partials/*protected.tmpl` переиспользуют `headers-*.tmpl` и `jwt-validator.tmpl` через `{{ template }}`
 
-Добавление нового микросервиса: создать `partials/{service}/{public,protected}.tmpl` + добавить import в `krakend.tmpl.json`.
+Добавление нового микросервиса: создать `partials/{service}-public.tmpl` и `partials/{service}-protected.tmpl` + добавить `{{ template "{service}-public.tmpl" . }}` в `krakend.tmpl.json`.
 
 ---
 
