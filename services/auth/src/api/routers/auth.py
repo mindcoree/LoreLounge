@@ -51,6 +51,8 @@ async def login(
     access_token = await auth.create_access_token(auth_info=auth_entity)
     refresh_token = await auth.create_refresh_token(auth_info=auth_entity)
 
+
+
     await auth.set_token_cookie(
         response=response,
         key=ACCESS_TOKEN_COOKIE_KEY,
